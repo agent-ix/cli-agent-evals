@@ -1,0 +1,8 @@
+{
+  "name": "cli-agent-evals",
+  "version": "0.1.0",
+  "description": "Run and author live CLI eval suites across Claude, Codex, opencode, and GitHub Copilot.",
+  "author": {
+    "name": "Agent IX"
+  }
+}

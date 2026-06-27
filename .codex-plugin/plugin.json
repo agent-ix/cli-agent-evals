@@ -1,0 +1,10 @@
+{
+  "name": "cli-agent-evals",
+  "version": "0.1.0",
+  "description": "Run and author live CLI eval suites across coding agents.",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "CLI Agent Evals",
+    "category": "Productivity"
+  }
+}

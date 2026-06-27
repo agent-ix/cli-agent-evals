@@ -1,0 +1,14 @@
+{
+  "name": "cli-agent-evals",
+  "interface": {
+    "displayName": "CLI Agent Evals"
+  },
+  "plugins": [
+    {
+      "name": "cli-agent-evals",
+      "source": { "source": "local", "path": "./" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "category": "Productivity"
+    }
+  ]
+}
