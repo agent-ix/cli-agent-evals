@@ -3,14 +3,17 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
-import { resolveDriver, pathWithShim } from "./drivers.js";
 import {
+  defaultKickoffLine,
+  defaultTaskBrief,
   findSentinelInText,
   findSentinelInTranscript,
+  pathWithShim,
+  resolveDriver,
   unavailableMetrics,
-} from "./metrics.js";
+} from "@agent-ix/agent-drivers";
+
 import { buildReport, buildScenarioResult, writeReport } from "./report.js";
-import { defaultKickoffLine, defaultTaskBrief } from "./sentinels.js";
 import { selectScenarios } from "./suite.js";
 import { defaultReportsDir, defaultWorkspace } from "./workspace.js";
 import type {
