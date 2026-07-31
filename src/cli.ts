@@ -3,7 +3,7 @@ import { Args, Flags } from "@oclif/core";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { builtinDrivers } from "./drivers.js";
+import { builtinDrivers } from "@agent-ix/agent-drivers";
 import { runSuite } from "./runner.js";
 import { loadSuite } from "./suite.js";
 import { resolveSuitePath } from "./workspace.js";

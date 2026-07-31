@@ -48,6 +48,7 @@
     "pkg:refresh-local": "pnpm dlx @agent-ix/js-deps refresh-local"
   },
   "dependencies": {
+    "@agent-ix/agent-drivers": ">=0.0.1-0",
     "@agent-ix/agent-pty": ">=0.1.0",
     "@agent-ix/ix-cli-core": ">=0.10.0",
     "@oclif/core": ">=4.11.4",

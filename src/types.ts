@@ -101,19 +101,15 @@ export interface ScenarioMetrics {
   [key: string]: unknown;
 }
 
-export interface AgentDriver<TContext extends EvalContext = EvalContext> {
-  id: AgentId;
-  displayName: string;
-  defaultCommand: string;
-  buildArgs: (ctx: TContext, opts: EvalRunOptions) => string[];
-  transcriptPath?: (ctx: TContext, opts: EvalRunOptions) => string | undefined;
-  startup?: (
-    session: AgentPtySession,
-    opts: AgentStartupOptions,
-  ) => Promise<void>;
-  parseMetrics?: (transcriptPath: string) => ScenarioMetrics;
-  probe?: () => Promise<DriverProbeResult>;
-}
+/**
+ * Drivers live in @agent-ix/agent-drivers. Re-declaring the shape here made a
+ * structurally identical but nominally distinct type, which resolveDriver then
+ * refused to accept. EvalRunOptions is a superset of the package's
+ * DriverOptions, so a driver built against the package works unchanged here.
+ */
+import type { AgentDriver } from "@agent-ix/agent-drivers";
+
+export type { AgentDriver };
 
 export interface AgentPtySession {
   type(text: string): Promise<void>;
