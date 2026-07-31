@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@agent-ix/agent-drivers':
         specifier: '>=0.0.1-0'
-        version: 0.0.1-20260731.022952-f722acd.8757441d
+        version: 0.0.1-20260731.024701-1944665
       '@agent-ix/agent-pty':
         specifier: '>=0.1.0'
         version: 0.1.7
@@ -63,8 +63,8 @@ importers:
 
 packages:
 
-  '@agent-ix/agent-drivers@0.0.1-20260731.022952-f722acd.8757441d':
-    resolution: {integrity: sha512-xnkMZTpiIPDnnUNvKvtGFj40MnD0qjHKoXISARSnVJzcV/bUu+Kp1Tn6YQIc/8qTmTw/6ZUx5QQgcBtXLyj8kA==}
+  '@agent-ix/agent-drivers@0.0.1-20260731.024701-1944665':
+    resolution: {integrity: sha512-S8IZaQnUE3LN3+XNCBSOCcHEoPltjYUc/qvGIFQg+21VoYJFK80tRETwvlMl6Ux0v/jToas5Q/G2LBWkU8BY9g==}
 
   '@agent-ix/agent-pty@0.1.7':
     resolution: {integrity: sha512-QdYgYtoPakpWXzhWBmv1RpyGHtwKjbn6z/FN1FDz7EY3UPXxeMEo1sn5BHNf8C/DDjCSx/iPeowrUTtEjagpzQ==, tarball: http://npm.ix/@agent-ix/agent-pty/-/c5e4318b0a79e79c89b9b7589adede207a2525b0}
@@ -1643,7 +1643,7 @@ packages:
 
 snapshots:
 
-  '@agent-ix/agent-drivers@0.0.1-20260731.022952-f722acd.8757441d':
+  '@agent-ix/agent-drivers@0.0.1-20260731.024701-1944665':
     dependencies:
       '@agent-ix/agent-pty': 0.1.7
 
