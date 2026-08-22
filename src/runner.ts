@@ -187,6 +187,8 @@ async function runAgentScenario<TContext extends EvalContext>(
     screenTail = await session.capture().catch(() => "");
     await session.kill().catch(() => {});
   }
+  ctx.transcriptPath =
+    driver.finalTranscriptPath?.(ctx, opts, t0) ?? ctx.transcriptPath;
   return {
     ok: exitReason === "complete",
     exitReason,

@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -8,10 +8,12 @@ import {
   findSentinelInTranscript,
   codexSubmit,
   codexStartup,
+  codexTranscriptPath,
   genericStartup,
   isCodexComposerHolding,
   isCodexReady,
   parseClaudeMetrics,
+  parseCodexMetrics,
   runSuite,
   selectScenarios,
 } from "../src/index.js";
@@ -140,6 +142,87 @@ test("TC-012: Codex submission does not retry after work starts", async () => {
   });
 
   expect(session.enter).toHaveBeenCalledOnce();
+});
+
+test("TC-013: Codex transcript discovery selects the matching CLI rollout", () => {
+  const root = mkdtempSync(join(tmpdir(), "cli-evals-codex-sessions-"));
+  const day = join(root, "2026", "08", "22");
+  mkdirSync(day, { recursive: true });
+  const rollout = join(day, "rollout.jsonl");
+  writeFileSync(
+    rollout,
+    `${JSON.stringify({
+      type: "session_meta",
+      payload: { cwd: "/tmp/eval/repo", source: "cli" },
+    })}\n`,
+  );
+
+  expect(
+    codexTranscriptPath(
+      { cwd: "/tmp/eval/repo" } as never,
+      Date.now() - 1000,
+      root,
+    ),
+  ).toBe(rollout);
+});
+
+test("TC-014: parseCodexMetrics aggregates rollout usage and operations", () => {
+  const dir = mkdtempSync(join(tmpdir(), "cli-evals-codex-metrics-"));
+  const transcript = join(dir, "rollout.jsonl");
+  writeFileSync(
+    transcript,
+    [
+      {
+        timestamp: "2026-01-01T00:00:00.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            last_token_usage: {
+              input_tokens: 100,
+              cached_input_tokens: 60,
+              output_tokens: 20,
+            },
+          },
+        },
+      },
+      {
+        timestamp: "2026-01-01T00:00:01.000Z",
+        type: "event_msg",
+        payload: {
+          type: "item_completed",
+          item: {
+            type: "CommandExecution",
+            command: [
+              "/bin/bash",
+              "-lc",
+              "quoin write . --types AssuranceProfile",
+            ],
+            exit_code: 0,
+          },
+        },
+      },
+      {
+        timestamp: "2026-01-01T00:00:02.000Z",
+        type: "event_msg",
+        payload: {
+          type: "item_completed",
+          item: { type: "FileChange" },
+        },
+      },
+    ]
+      .map((line) => JSON.stringify(line))
+      .join("\n"),
+  );
+
+  const metrics = parseCodexMetrics(transcript);
+  expect(metrics.tokenUsage.contextInput).toBe(100);
+  expect(metrics.tokenUsage.cacheRead).toBe(60);
+  expect(metrics.tokenUsage.output).toBe(20);
+  expect(metrics.toolCalls).toBe(2);
+  expect(metrics.classified.contextFetches).toBe(1);
+  expect(metrics.classified.edits).toBe(1);
+  expect(metrics.distinctTypePacks).toBe(1);
 });
 
 test("TC-011: scenario reports preserve terminal diagnostics", () => {

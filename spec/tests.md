@@ -20,6 +20,7 @@ type: TestMatrix
 | FR-002 | FR-002-AC-5 | TC-010 | ✅ Complete |
 | FR-002 | FR-002-AC-6 | TC-011 | ✅ Complete |
 | FR-002 | FR-002-AC-7 | TC-012 | ✅ Complete |
+| FR-002 | FR-002-AC-8 | TC-013, TC-014 | ✅ Complete |
 
 ## Test Case Summary
 
@@ -37,3 +38,5 @@ type: TestMatrix
 | TC-010  | Startup timeout fails closed          | Unit        | P0       | FR-002-AC-5              | ✅ Complete |
 | TC-011  | Failure report terminal diagnostics   | Unit        | P0       | FR-002-AC-6              | ✅ Complete |
 | TC-012  | Codex prompt submission confirmation  | Unit        | P0       | FR-002-AC-7              | ✅ Complete |
+| TC-013  | Codex rollout transcript discovery    | Unit        | P0       | FR-002-AC-8              | ✅ Complete |
+| TC-014  | Codex transcript metric parsing       | Unit        | P0       | FR-002-AC-8              | ✅ Complete |

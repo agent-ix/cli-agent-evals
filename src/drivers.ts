@@ -1,10 +1,10 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 
-import { parseClaudeMetrics } from "./metrics.js";
+import { parseClaudeMetrics, parseCodexMetrics } from "./metrics.js";
 import type {
   AgentDriver,
   AgentPtySession,
@@ -26,6 +26,47 @@ export function claudeTranscriptPath(ctx: EvalContext): string {
     slug(ctx.cwd),
     `${ctx.sessionId}.jsonl`,
   );
+}
+
+function jsonlFiles(root: string): string[] {
+  if (!existsSync(root)) return [];
+  const files: string[] = [];
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    const path = join(root, entry.name);
+    if (entry.isDirectory()) files.push(...jsonlFiles(path));
+    else if (entry.isFile() && entry.name.endsWith(".jsonl")) files.push(path);
+  }
+  return files;
+}
+
+export function codexTranscriptPath(
+  ctx: EvalContext,
+  startedAtMs: number,
+  sessionsRoot = join(homedir(), ".codex", "sessions"),
+): string | undefined {
+  let best: { path: string; mtimeMs: number } | undefined;
+  for (const path of jsonlFiles(sessionsRoot)) {
+    const { mtimeMs } = statSync(path);
+    if (mtimeMs < startedAtMs - 60_000) continue;
+    let firstLine: Record<string, unknown>;
+    try {
+      firstLine = JSON.parse(
+        readFileSync(path, "utf8").split("\n", 1)[0] ?? "{}",
+      ) as Record<string, unknown>;
+    } catch {
+      continue;
+    }
+    const payload = firstLine.payload as Record<string, unknown> | undefined;
+    if (
+      firstLine.type !== "session_meta" ||
+      payload?.cwd !== ctx.cwd ||
+      payload.source !== "cli"
+    ) {
+      continue;
+    }
+    if (!best || mtimeMs > best.mtimeMs) best = { path, mtimeMs };
+  }
+  return best?.path;
 }
 
 type StartupReady = (screen: string) => boolean;
@@ -176,6 +217,9 @@ export const builtinDrivers: Record<string, AgentDriver> = {
     },
     startup: (session, opts) => codexStartup(session, opts),
     submit: (session, prompt, opts) => codexSubmit(session, prompt, opts),
+    finalTranscriptPath: (ctx, _opts, startedAtMs) =>
+      codexTranscriptPath(ctx, startedAtMs),
+    parseMetrics: parseCodexMetrics,
     probe: async () => commandProbe("codex"),
   },
   opencode: {
