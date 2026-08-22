@@ -75,6 +75,7 @@ export interface AgentRunResult {
   exitReason: "complete" | "failed" | "timeout" | "exit" | "error";
   wallMs: number;
   screenTail?: string;
+  error?: string;
   stdout?: string;
   stderr?: string;
   exitCode?: number | null;
@@ -126,6 +127,7 @@ export interface AgentPtySession {
 export interface AgentStartupOptions {
   timeoutMs: number;
   pollMs: number;
+  sleep?: (ms: number) => Promise<void>;
 }
 
 export interface DriverProbeResult {
@@ -162,6 +164,8 @@ export interface ScenarioSample {
   workDir: string;
   sessionId: string;
   transcriptPath?: string;
+  screenTail?: string;
+  error?: string;
 }
 
 export interface ScenarioResult {

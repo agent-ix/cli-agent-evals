@@ -59,6 +59,8 @@ export async function runSuite<TContext extends EvalContext>(
           workDir: ctx.workDir,
           sessionId: ctx.sessionId,
           transcriptPath: ctx.transcriptPath,
+          screenTail: run.screenTail,
+          error: run.error,
         });
       } finally {
         if (!opts.keep) ctx.cleanup();
@@ -144,6 +146,7 @@ async function runAgentScenario<TContext extends EvalContext>(
 
   let exitReason: AgentRunResult["exitReason"] = "timeout";
   let screenTail = "";
+  let error: string | undefined;
   try {
     await driver.startup?.(session, { timeoutMs: 45_000, pollMs: 700 });
     await session.type(kickoff);
@@ -169,8 +172,9 @@ async function runAgentScenario<TContext extends EvalContext>(
       }
       await delay(2000);
     }
-  } catch {
+  } catch (cause) {
     exitReason = "error";
+    error = cause instanceof Error ? cause.message : String(cause);
   } finally {
     screenTail = await session.capture().catch(() => "");
     await session.kill().catch(() => {});
@@ -180,6 +184,7 @@ async function runAgentScenario<TContext extends EvalContext>(
     exitReason,
     wallMs: Date.now() - t0,
     screenTail: screenTail.split("\n").slice(-60).join("\n"),
+    error,
   };
 }
 

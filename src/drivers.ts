@@ -8,6 +8,7 @@ import { parseClaudeMetrics } from "./metrics.js";
 import type {
   AgentDriver,
   AgentPtySession,
+  AgentStartupOptions,
   DriverProbeResult,
   EvalContext,
 } from "./types.js";
@@ -26,34 +27,68 @@ export function claudeTranscriptPath(ctx: EvalContext): string {
   );
 }
 
-async function genericStartup(
+type StartupReady = (screen: string) => boolean;
+
+async function waitForStartup(
   session: AgentPtySession,
-  timeoutMs: number,
+  opts: AgentStartupOptions,
+  ready: StartupReady,
 ): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
+  const sleep = opts.sleep ?? ((ms: number) => delay(ms));
+  const deadline = Date.now() + opts.timeoutMs;
+  let lastScreen = "";
   while (Date.now() < deadline) {
     const screen = await session.capture().catch(() => "");
+    lastScreen = screen;
     if (
       /Bypass Permissions mode/i.test(screen) &&
       /Yes, I accept/i.test(screen)
     ) {
       await session.sendKey("Down");
-      await delay(300);
+      await sleep(300);
       await session.enter();
-      await delay(1500);
+      await sleep(1500);
       continue;
     }
     if (/trust the files|Do you trust/i.test(screen)) {
       await session.enter();
-      await delay(1500);
+      await sleep(1500);
       continue;
     }
-    if (/for shortcuts|Welcome|How can I help|Ask/i.test(screen)) {
-      await delay(800);
+    if (ready(screen)) {
+      await sleep(800);
       return;
     }
-    await delay(700);
+    await sleep(opts.pollMs);
   }
+  const tail = lastScreen.split("\n").slice(-12).join("\n").trim();
+  throw new Error(
+    `agent startup did not become ready within ${opts.timeoutMs}ms` +
+      (tail ? `; final screen:\n${tail}` : "; final screen was empty"),
+  );
+}
+
+export async function genericStartup(
+  session: AgentPtySession,
+  opts: AgentStartupOptions,
+): Promise<void> {
+  await waitForStartup(session, opts, (screen) =>
+    /for shortcuts|Welcome|How can I help|Ask/i.test(screen),
+  );
+}
+
+export function isCodexReady(screen: string): boolean {
+  if (!/Ask Codex to do anything/i.test(screen)) return false;
+  const modelLines = [...screen.matchAll(/model:\s+([^\r\n]+)/gi)];
+  const currentModel = modelLines.at(-1)?.[1]?.trim();
+  return Boolean(currentModel) && !/^loading\b/i.test(currentModel ?? "");
+}
+
+export async function codexStartup(
+  session: AgentPtySession,
+  opts: AgentStartupOptions,
+): Promise<void> {
+  await waitForStartup(session, opts, isCodexReady);
 }
 
 function commandProbe(command: string): DriverProbeResult {
@@ -83,7 +118,7 @@ export const builtinDrivers: Record<string, AgentDriver> = {
       ];
     },
     transcriptPath: (ctx) => claudeTranscriptPath(ctx),
-    startup: (session, opts) => genericStartup(session, opts.timeoutMs),
+    startup: (session, opts) => genericStartup(session, opts),
     parseMetrics: parseClaudeMetrics,
     probe: async () => commandProbe("claude"),
   },
@@ -94,7 +129,7 @@ export const builtinDrivers: Record<string, AgentDriver> = {
     buildArgs(_ctx, opts) {
       return opts.model ? ["--model", opts.model] : [];
     },
-    startup: (session, opts) => genericStartup(session, opts.timeoutMs),
+    startup: (session, opts) => codexStartup(session, opts),
     probe: async () => commandProbe("codex"),
   },
   opencode: {
@@ -104,7 +139,7 @@ export const builtinDrivers: Record<string, AgentDriver> = {
     buildArgs(_ctx, opts) {
       return opts.model ? ["--model", opts.model] : [];
     },
-    startup: (session, opts) => genericStartup(session, opts.timeoutMs),
+    startup: (session, opts) => genericStartup(session, opts),
     probe: async () => commandProbe("opencode"),
   },
   copilot: {
@@ -114,7 +149,7 @@ export const builtinDrivers: Record<string, AgentDriver> = {
     buildArgs(_ctx, opts) {
       return ["copilot", ...(opts.model ? ["--model", opts.model] : [])];
     },
-    startup: (session, opts) => genericStartup(session, opts.timeoutMs),
+    startup: (session, opts) => genericStartup(session, opts),
     probe: async () => {
       if (commandProbe("copilot").ok) return { ok: true, command: "copilot" };
       const gh = commandProbe("gh");
