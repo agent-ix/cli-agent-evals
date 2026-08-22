@@ -37,8 +37,17 @@ async function waitForStartup(
   const sleep = opts.sleep ?? ((ms: number) => delay(ms));
   const deadline = Date.now() + opts.timeoutMs;
   let lastScreen = "";
+  let lastCaptureError: string | undefined;
   while (Date.now() < deadline) {
-    const screen = await session.capture().catch(() => "");
+    let screen: string;
+    try {
+      screen = await session.capture();
+      lastCaptureError = undefined;
+    } catch (cause) {
+      lastCaptureError = cause instanceof Error ? cause.message : String(cause);
+      await sleep(opts.pollMs);
+      continue;
+    }
     lastScreen = screen;
     if (
       /Bypass Permissions mode/i.test(screen) &&
@@ -61,10 +70,19 @@ async function waitForStartup(
     }
     await sleep(opts.pollMs);
   }
+  try {
+    const finalScreen = await session.capture();
+    lastScreen = finalScreen;
+    lastCaptureError = undefined;
+    if (ready(finalScreen)) return;
+  } catch (cause) {
+    lastCaptureError = cause instanceof Error ? cause.message : String(cause);
+  }
   const tail = lastScreen.split("\n").slice(-12).join("\n").trim();
   throw new Error(
     `agent startup did not become ready within ${opts.timeoutMs}ms` +
-      (tail ? `; final screen:\n${tail}` : "; final screen was empty"),
+      (tail ? `; final screen:\n${tail}` : "; final screen was empty") +
+      (lastCaptureError ? `; capture error: ${lastCaptureError}` : ""),
   );
 }
 

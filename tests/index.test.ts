@@ -75,6 +75,22 @@ test("TC-009: Codex startup waits for a loaded model and ready composer", async 
   expect(session.capture).toHaveBeenCalledTimes(2);
 });
 
+test("TC-009: Codex startup accepts readiness on the final capture", async () => {
+  const ready = [
+    "model:     gpt-5.6-sol high   /model to change",
+    "› Ask Codex to do anything",
+  ].join("\n");
+  const session = fakeSession([ready]);
+
+  await codexStartup(session, {
+    timeoutMs: 0,
+    pollMs: 0,
+    sleep: async () => {},
+  });
+
+  expect(session.capture).toHaveBeenCalledOnce();
+});
+
 test("TC-010: startup timeout fails closed instead of typing into an unknown UI", async () => {
   await expect(
     genericStartup(fakeSession([""]), {
