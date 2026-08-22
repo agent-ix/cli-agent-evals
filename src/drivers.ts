@@ -9,6 +9,7 @@ import type {
   AgentDriver,
   AgentPtySession,
   AgentStartupOptions,
+  AgentSubmitOptions,
   DriverProbeResult,
   EvalContext,
 } from "./types.js";
@@ -109,6 +110,32 @@ export async function codexStartup(
   await waitForStartup(session, opts, isCodexReady);
 }
 
+export function isCodexComposerHolding(
+  screen: string,
+  prompt: string,
+): boolean {
+  const promptIndex = screen.lastIndexOf(`› ${prompt}`);
+  if (promptIndex < 0) return false;
+  const suffix = screen.slice(promptIndex + prompt.length + 2);
+  return /^\s+gpt-[^\r\n]+·[^\r\n]+\s*$/is.test(suffix);
+}
+
+export async function codexSubmit(
+  session: AgentPtySession,
+  prompt: string,
+  opts: AgentSubmitOptions,
+): Promise<void> {
+  const sleep = opts.sleep ?? ((ms: number) => delay(ms));
+  await session.type(prompt);
+  await sleep(opts.inputSettleMs);
+  await session.enter();
+  await sleep(opts.confirmationMs);
+  const screen = await session.capture().catch(() => "");
+  if (isCodexComposerHolding(screen, prompt)) {
+    await session.enter();
+  }
+}
+
 function commandProbe(command: string): DriverProbeResult {
   const res = spawnSync("command", ["-v", command], {
     shell: true,
@@ -148,6 +175,7 @@ export const builtinDrivers: Record<string, AgentDriver> = {
       return opts.model ? ["--model", opts.model] : [];
     },
     startup: (session, opts) => codexStartup(session, opts),
+    submit: (session, prompt, opts) => codexSubmit(session, prompt, opts),
     probe: async () => commandProbe("codex"),
   },
   opencode: {

@@ -3,8 +3,10 @@ export { runSuite } from "./runner.js";
 export {
   builtinDrivers,
   claudeTranscriptPath,
+  codexSubmit,
   codexStartup,
   genericStartup,
+  isCodexComposerHolding,
   isCodexReady,
   resolveDriver,
 } from "./drivers.js";

@@ -6,8 +6,10 @@ import {
   defineSuite,
   findSentinelInText,
   findSentinelInTranscript,
+  codexSubmit,
   codexStartup,
   genericStartup,
+  isCodexComposerHolding,
   isCodexReady,
   parseClaudeMetrics,
   runSuite,
@@ -99,6 +101,45 @@ test("TC-010: startup timeout fails closed instead of typing into an unknown UI"
       sleep: async () => {},
     }),
   ).rejects.toThrow(/did not become ready/);
+});
+
+test("TC-012: Codex submission retries a dropped Enter once", async () => {
+  const prompt = "Read ./EVAL_TASK.md and complete the task.";
+  const holding = [`› ${prompt}`, "", "  gpt-5.6-sol high · /tmp/eval"].join(
+    "\n",
+  );
+  const session = fakeSession([holding]);
+
+  expect(isCodexComposerHolding(holding, prompt)).toBe(true);
+  await codexSubmit(session, prompt, {
+    inputSettleMs: 0,
+    confirmationMs: 0,
+    sleep: async () => {},
+  });
+
+  expect(session.type).toHaveBeenCalledWith(prompt);
+  expect(session.enter).toHaveBeenCalledTimes(2);
+});
+
+test("TC-012: Codex submission does not retry after work starts", async () => {
+  const prompt = "Read ./EVAL_TASK.md and complete the task.";
+  const running = [
+    `› ${prompt}`,
+    "",
+    "• Working (1s)",
+    "",
+    "  gpt-5.6-sol high · /tmp/eval",
+  ].join("\n");
+  const session = fakeSession([running]);
+
+  expect(isCodexComposerHolding(running, prompt)).toBe(false);
+  await codexSubmit(session, prompt, {
+    inputSettleMs: 0,
+    confirmationMs: 0,
+    sleep: async () => {},
+  });
+
+  expect(session.enter).toHaveBeenCalledOnce();
 });
 
 test("TC-011: scenario reports preserve terminal diagnostics", () => {

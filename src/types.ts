@@ -112,6 +112,11 @@ export interface AgentDriver<TContext extends EvalContext = EvalContext> {
     session: AgentPtySession,
     opts: AgentStartupOptions,
   ) => Promise<void>;
+  submit?: (
+    session: AgentPtySession,
+    prompt: string,
+    opts: AgentSubmitOptions,
+  ) => Promise<void>;
   parseMetrics?: (transcriptPath: string) => ScenarioMetrics;
   probe?: () => Promise<DriverProbeResult>;
 }
@@ -127,6 +132,12 @@ export interface AgentPtySession {
 export interface AgentStartupOptions {
   timeoutMs: number;
   pollMs: number;
+  sleep?: (ms: number) => Promise<void>;
+}
+
+export interface AgentSubmitOptions {
+  inputSettleMs: number;
+  confirmationMs: number;
   sleep?: (ms: number) => Promise<void>;
 }
 

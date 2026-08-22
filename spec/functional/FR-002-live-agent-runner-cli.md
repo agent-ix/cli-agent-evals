@@ -29,3 +29,4 @@ drivers using `agent-pty`, sentinel detection, and report aggregation.
 | FR-002-AC-4 | A live driver submits work only after its agent-specific ready state is observed. | Unit |
 | FR-002-AC-5 | A startup timeout ends the run with an error without submitting work. | Unit |
 | FR-002-AC-6 | A failed or timed-out live run retains its terminal tail and startup error in the JSON report. | Unit |
+| FR-002-AC-7 | The Codex driver confirms that submitted work left the active composer and retries a dropped Enter once. | Unit |

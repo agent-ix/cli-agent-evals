@@ -149,8 +149,16 @@ async function runAgentScenario<TContext extends EvalContext>(
   let error: string | undefined;
   try {
     await driver.startup?.(session, { timeoutMs: 45_000, pollMs: 700 });
-    await session.type(kickoff);
-    await session.enter();
+    if (driver.submit) {
+      await driver.submit(session, kickoff, {
+        inputSettleMs: 500,
+        confirmationMs: 800,
+      });
+    } else {
+      await session.type(kickoff);
+      await delay(500);
+      await session.enter();
+    }
     const deadline = Date.now() + 8 * 60_000;
     while (Date.now() < deadline) {
       const transcriptSentinel = ctx.transcriptPath
