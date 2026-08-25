@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -6,10 +6,34 @@ import {
   defineSuite,
   findSentinelInText,
   findSentinelInTranscript,
+  codexSubmit,
+  codexStartup,
+  codexTranscriptPath,
+  genericStartup,
+  isCodexComposerHolding,
+  isCodexReady,
   parseClaudeMetrics,
+  parseCodexMetrics,
   runSuite,
   selectScenarios,
 } from "../src/index.js";
+import { buildScenarioResult } from "../src/report.js";
+import type { AgentPtySession } from "../src/types.js";
+
+function fakeSession(screens: string[]): AgentPtySession {
+  let captureIndex = 0;
+  return {
+    type: vi.fn(async () => {}),
+    enter: vi.fn(async () => {}),
+    sendKey: vi.fn(async () => {}),
+    capture: vi.fn(async () => {
+      const index = Math.min(captureIndex, screens.length - 1);
+      captureIndex += 1;
+      return screens[index] ?? "";
+    }),
+    kill: vi.fn(async () => {}),
+  };
+}
 
 test("TC-001: selectScenarios requires exactly one selector", () => {
   const scenarios = [{ id: "EV-001", canary: true }, { id: "EV-002" }];
@@ -30,6 +54,210 @@ test("findSentinelInText detects completion and failure markers", () => {
   expect(findSentinelInText("ok <<<EVAL-COMPLETE>>>")).toBe("complete");
   expect(findSentinelInText("bad <<<EVAL-FAILED>>>")).toBe("failed");
   expect(findSentinelInText("still running")).toBeNull();
+});
+
+test("TC-009: Codex startup waits for a loaded model and ready composer", async () => {
+  const loading = [
+    "model:     loading   /model to change",
+    "› Ask Codex to do anything",
+  ].join("\n");
+  const ready = [
+    loading,
+    "model:     gpt-5.6-sol high   /model to change",
+    "› Ask Codex to do anything",
+  ].join("\n");
+  const session = fakeSession([loading, ready]);
+
+  expect(isCodexReady(loading)).toBe(false);
+  expect(isCodexReady(ready)).toBe(true);
+  await codexStartup(session, {
+    timeoutMs: 1000,
+    pollMs: 0,
+    sleep: async () => {},
+  });
+
+  expect(session.capture).toHaveBeenCalledTimes(2);
+});
+
+test("TC-009: Codex startup accepts readiness on the final capture", async () => {
+  const ready = [
+    "model:     gpt-5.6-sol high   /model to change",
+    "› Ask Codex to do anything",
+  ].join("\n");
+  const session = fakeSession([ready]);
+
+  await codexStartup(session, {
+    timeoutMs: 0,
+    pollMs: 0,
+    sleep: async () => {},
+  });
+
+  expect(session.capture).toHaveBeenCalledOnce();
+});
+
+test("TC-010: startup timeout fails closed instead of typing into an unknown UI", async () => {
+  await expect(
+    genericStartup(fakeSession([""]), {
+      timeoutMs: 0,
+      pollMs: 0,
+      sleep: async () => {},
+    }),
+  ).rejects.toThrow(/did not become ready/);
+});
+
+test("TC-012: Codex submission retries a dropped Enter once", async () => {
+  const prompt = "Read ./EVAL_TASK.md and complete the task.";
+  const holding = [`› ${prompt}`, "", "  gpt-5.6-sol high · /tmp/eval"].join(
+    "\n",
+  );
+  const session = fakeSession([holding]);
+
+  expect(isCodexComposerHolding(holding, prompt)).toBe(true);
+  await codexSubmit(session, prompt, {
+    inputSettleMs: 0,
+    confirmationMs: 0,
+    sleep: async () => {},
+  });
+
+  expect(session.type).toHaveBeenCalledWith(prompt);
+  expect(session.enter).toHaveBeenCalledTimes(2);
+});
+
+test("TC-012: Codex submission does not retry after work starts", async () => {
+  const prompt = "Read ./EVAL_TASK.md and complete the task.";
+  const running = [
+    `› ${prompt}`,
+    "",
+    "• Working (1s)",
+    "",
+    "  gpt-5.6-sol high · /tmp/eval",
+  ].join("\n");
+  const session = fakeSession([running]);
+
+  expect(isCodexComposerHolding(running, prompt)).toBe(false);
+  await codexSubmit(session, prompt, {
+    inputSettleMs: 0,
+    confirmationMs: 0,
+    sleep: async () => {},
+  });
+
+  expect(session.enter).toHaveBeenCalledOnce();
+});
+
+test("TC-013: Codex transcript discovery selects the matching CLI rollout", () => {
+  const root = mkdtempSync(join(tmpdir(), "cli-evals-codex-sessions-"));
+  const day = join(root, "2026", "08", "22");
+  mkdirSync(day, { recursive: true });
+  const rollout = join(day, "rollout.jsonl");
+  writeFileSync(
+    rollout,
+    `${JSON.stringify({
+      type: "session_meta",
+      payload: { cwd: "/tmp/eval/repo", source: "cli" },
+    })}\n`,
+  );
+
+  expect(
+    codexTranscriptPath(
+      { cwd: "/tmp/eval/repo" } as never,
+      Date.now() - 1000,
+      root,
+    ),
+  ).toBe(rollout);
+});
+
+test("TC-014: parseCodexMetrics aggregates rollout usage and operations", () => {
+  const dir = mkdtempSync(join(tmpdir(), "cli-evals-codex-metrics-"));
+  const transcript = join(dir, "rollout.jsonl");
+  writeFileSync(
+    transcript,
+    [
+      {
+        timestamp: "2026-01-01T00:00:00.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            last_token_usage: {
+              input_tokens: 100,
+              cached_input_tokens: 60,
+              output_tokens: 20,
+            },
+          },
+        },
+      },
+      {
+        timestamp: "2026-01-01T00:00:01.000Z",
+        type: "event_msg",
+        payload: {
+          type: "item_completed",
+          item: {
+            type: "CommandExecution",
+            command: [
+              "/bin/bash",
+              "-lc",
+              "quoin write . --types AssuranceProfile",
+            ],
+            exit_code: 0,
+          },
+        },
+      },
+      {
+        timestamp: "2026-01-01T00:00:02.000Z",
+        type: "event_msg",
+        payload: {
+          type: "item_completed",
+          item: { type: "FileChange" },
+        },
+      },
+    ]
+      .map((line) => JSON.stringify(line))
+      .join("\n"),
+  );
+
+  const metrics = parseCodexMetrics(transcript);
+  expect(metrics.tokenUsage.contextInput).toBe(100);
+  expect(metrics.tokenUsage.cacheRead).toBe(60);
+  expect(metrics.tokenUsage.output).toBe(20);
+  expect(metrics.toolCalls).toBe(2);
+  expect(metrics.classified.contextFetches).toBe(1);
+  expect(metrics.classified.edits).toBe(1);
+  expect(metrics.distinctTypePacks).toBe(1);
+});
+
+test("TC-011: scenario reports preserve terminal diagnostics", () => {
+  const result = buildScenarioResult({ id: "EV-DIAGNOSTIC" }, [
+    {
+      ok: false,
+      wallMs: 10,
+      exitReason: "error",
+      metrics: {
+        metricStatus: "unavailable",
+        tokenUsage: {
+          input: 0,
+          output: 0,
+          cacheCreation: 0,
+          cacheRead: 0,
+          contextInput: 0,
+          total: 0,
+        },
+        toolCalls: null,
+        toolBreakdown: {},
+        classified: {},
+        assistantTurns: null,
+        modelActiveMs: null,
+        transcriptLines: null,
+      },
+      assertion: { ok: false, failures: ["startup failed"] },
+      workDir: "/tmp/eval",
+      sessionId: "session",
+      screenTail: "model: loading",
+      error: "agent startup did not become ready",
+    },
+  ]);
+
+  expect(result.runs[0]?.screenTail).toBe("model: loading");
+  expect(result.runs[0]?.error).toMatch(/startup/);
 });
 
 test("findSentinelInTranscript ignores task brief echoes from Read results", () => {

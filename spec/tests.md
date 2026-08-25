@@ -16,6 +16,11 @@ type: TestMatrix
 | FR-001 | FR-001-AC-2 | TC-001 | ✅ Complete |
 | FR-002 | FR-002-AC-2 | TC-004 | ✅ Complete |
 | FR-002 | FR-002-AC-3 | TC-007 | ✅ Complete |
+| FR-002 | FR-002-AC-4 | TC-009 | ✅ Complete |
+| FR-002 | FR-002-AC-5 | TC-010 | ✅ Complete |
+| FR-002 | FR-002-AC-6 | TC-011 | ✅ Complete |
+| FR-002 | FR-002-AC-7 | TC-012 | ✅ Complete |
+| FR-002 | FR-002-AC-8 | TC-013, TC-014 | ✅ Complete |
 
 ## Test Case Summary
 
@@ -29,3 +34,9 @@ type: TestMatrix
 | TC-006  | quoin suite config load               | Integration | P0       | IT-001-AC-2              | ✅ Complete |
 | TC-007  | Existing report rebuild               | Integration | P1       | FR-002-AC-3, IT-001-AC-3 | ✅ Complete |
 | TC-008  | Live agent scenario run               | Integration | P0       | NFR-001-AC-1             | ⛔ Blocked pending explicit approval for external model data transfer |
+| TC-009  | Codex loaded-model readiness          | Unit        | P0       | FR-002-AC-4              | ✅ Complete |
+| TC-010  | Startup timeout fails closed          | Unit        | P0       | FR-002-AC-5              | ✅ Complete |
+| TC-011  | Failure report terminal diagnostics   | Unit        | P0       | FR-002-AC-6              | ✅ Complete |
+| TC-012  | Codex prompt submission confirmation  | Unit        | P0       | FR-002-AC-7              | ✅ Complete |
+| TC-013  | Codex rollout transcript discovery    | Unit        | P0       | FR-002-AC-8              | ✅ Complete |
+| TC-014  | Codex transcript metric parsing       | Unit        | P0       | FR-002-AC-8              | ✅ Complete |

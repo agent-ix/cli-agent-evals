@@ -39,6 +39,8 @@ export function buildScenarioResult(
     workDir: string;
     sessionId: string;
     transcriptPath?: string;
+    screenTail?: string;
+    error?: string;
   }>,
 ): ScenarioResult {
   const samples = runs.map((run) => ({
@@ -55,6 +57,8 @@ export function buildScenarioResult(
     workDir: run.workDir,
     sessionId: run.sessionId,
     transcriptPath: run.transcriptPath,
+    screenTail: run.screenTail,
+    error: run.error,
   }));
   const passCount = samples.filter((sample) => sample.ok).length;
   return {

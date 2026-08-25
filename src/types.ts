@@ -75,6 +75,7 @@ export interface AgentRunResult {
   exitReason: "complete" | "failed" | "timeout" | "exit" | "error";
   wallMs: number;
   screenTail?: string;
+  error?: string;
   stdout?: string;
   stderr?: string;
   exitCode?: number | null;
@@ -107,9 +108,19 @@ export interface AgentDriver<TContext extends EvalContext = EvalContext> {
   defaultCommand: string;
   buildArgs: (ctx: TContext, opts: EvalRunOptions) => string[];
   transcriptPath?: (ctx: TContext, opts: EvalRunOptions) => string | undefined;
+  finalTranscriptPath?: (
+    ctx: TContext,
+    opts: EvalRunOptions,
+    startedAtMs: number,
+  ) => string | undefined;
   startup?: (
     session: AgentPtySession,
     opts: AgentStartupOptions,
+  ) => Promise<void>;
+  submit?: (
+    session: AgentPtySession,
+    prompt: string,
+    opts: AgentSubmitOptions,
   ) => Promise<void>;
   parseMetrics?: (transcriptPath: string) => ScenarioMetrics;
   probe?: () => Promise<DriverProbeResult>;
@@ -126,6 +137,13 @@ export interface AgentPtySession {
 export interface AgentStartupOptions {
   timeoutMs: number;
   pollMs: number;
+  sleep?: (ms: number) => Promise<void>;
+}
+
+export interface AgentSubmitOptions {
+  inputSettleMs: number;
+  confirmationMs: number;
+  sleep?: (ms: number) => Promise<void>;
 }
 
 export interface DriverProbeResult {
@@ -162,6 +180,8 @@ export interface ScenarioSample {
   workDir: string;
   sessionId: string;
   transcriptPath?: string;
+  screenTail?: string;
+  error?: string;
 }
 
 export interface ScenarioResult {

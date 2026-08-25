@@ -59,6 +59,8 @@ export async function runSuite<TContext extends EvalContext>(
           workDir: ctx.workDir,
           sessionId: ctx.sessionId,
           transcriptPath: ctx.transcriptPath,
+          screenTail: run.screenTail,
+          error: run.error,
         });
       } finally {
         if (!opts.keep) ctx.cleanup();
@@ -144,10 +146,19 @@ async function runAgentScenario<TContext extends EvalContext>(
 
   let exitReason: AgentRunResult["exitReason"] = "timeout";
   let screenTail = "";
+  let error: string | undefined;
   try {
     await driver.startup?.(session, { timeoutMs: 45_000, pollMs: 700 });
-    await session.type(kickoff);
-    await session.enter();
+    if (driver.submit) {
+      await driver.submit(session, kickoff, {
+        inputSettleMs: 500,
+        confirmationMs: 800,
+      });
+    } else {
+      await session.type(kickoff);
+      await delay(500);
+      await session.enter();
+    }
     const deadline = Date.now() + 8 * 60_000;
     while (Date.now() < deadline) {
       const transcriptSentinel = ctx.transcriptPath
@@ -169,17 +180,21 @@ async function runAgentScenario<TContext extends EvalContext>(
       }
       await delay(2000);
     }
-  } catch {
+  } catch (cause) {
     exitReason = "error";
+    error = cause instanceof Error ? cause.message : String(cause);
   } finally {
     screenTail = await session.capture().catch(() => "");
     await session.kill().catch(() => {});
   }
+  ctx.transcriptPath =
+    driver.finalTranscriptPath?.(ctx, opts, t0) ?? ctx.transcriptPath;
   return {
     ok: exitReason === "complete",
     exitReason,
     wallMs: Date.now() - t0,
     screenTail: screenTail.split("\n").slice(-60).join("\n"),
+    error,
   };
 }
 

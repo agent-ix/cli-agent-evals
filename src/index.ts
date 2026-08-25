@@ -3,6 +3,12 @@ export { runSuite } from "./runner.js";
 export {
   builtinDrivers,
   claudeTranscriptPath,
+  codexTranscriptPath,
+  codexSubmit,
+  codexStartup,
+  genericStartup,
+  isCodexComposerHolding,
+  isCodexReady,
   resolveDriver,
 } from "./drivers.js";
 export {
@@ -14,6 +20,7 @@ export {
 export {
   findSentinelInText,
   findSentinelInTranscript,
+  parseCodexMetrics,
   parseClaudeMetrics,
   readJsonl,
   unavailableMetrics,

@@ -26,3 +26,8 @@ drivers using `agent-pty`, sentinel detection, and report aggregation.
 | FR-002-AC-1 | `cli-evals run` requires an explicit selector and agent.    | Unit         |
 | FR-002-AC-2 | `cli-evals doctor` probes real local agent binaries.        | Integration  |
 | FR-002-AC-3 | `cli-evals rebuild` prints summaries from existing reports. | Integration  |
+| FR-002-AC-4 | A live driver submits work only after its agent-specific ready state is observed. | Unit |
+| FR-002-AC-5 | A startup timeout ends the run with an error without submitting work. | Unit |
+| FR-002-AC-6 | A failed or timed-out live run retains its terminal tail and startup error in the JSON report. | Unit |
+| FR-002-AC-7 | The Codex driver confirms that submitted work left the active composer and retries a dropped Enter once. | Unit |
+| FR-002-AC-8 | A completed Codex run resolves its local rollout transcript and reports token, tool, and classified-operation metrics from it. | Unit |

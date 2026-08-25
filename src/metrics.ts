@@ -147,3 +147,94 @@ export function parseClaudeMetrics(path: string): ScenarioMetrics {
     transcriptLines: lines.length,
   };
 }
+
+export function parseCodexMetrics(path: string): ScenarioMetrics {
+  const lines = readJsonl(path) as Array<Record<string, unknown>>;
+  const tokenUsage = zeroUsage();
+  const toolBreakdown: Record<string, number> = {};
+  const classified: Record<string, number> = {
+    contextFetches: 0,
+    validationAttempts: 0,
+    validationFailures: 0,
+    edits: 0,
+    flowOps: 0,
+  };
+  const timestamps: number[] = [];
+  const typePacks = new Set<string>();
+  let assistantTurns = 0;
+  let toolCalls = 0;
+
+  for (const line of lines) {
+    if (typeof line.timestamp === "string") {
+      const timestamp = Date.parse(line.timestamp);
+      if (!Number.isNaN(timestamp)) timestamps.push(timestamp);
+    }
+    const payload = line.payload as Record<string, unknown> | undefined;
+    if (line.type !== "event_msg" || !payload) continue;
+    if (payload.type === "token_count") {
+      const info = payload.info as Record<string, unknown> | undefined;
+      const usage = info?.last_token_usage as
+        | Record<string, number>
+        | undefined;
+      if (!usage) continue;
+      const input = usage.input_tokens ?? 0;
+      const cached = usage.cached_input_tokens ?? 0;
+      tokenUsage.input += Math.max(0, input - cached);
+      tokenUsage.cacheRead += cached;
+      tokenUsage.output += usage.output_tokens ?? 0;
+      assistantTurns += 1;
+      continue;
+    }
+    if (payload.type !== "item_completed") continue;
+    const item = payload.item as Record<string, unknown> | undefined;
+    if (!item) continue;
+    if (item.type === "FileChange") {
+      toolCalls += 1;
+      toolBreakdown.FileChange = (toolBreakdown.FileChange ?? 0) + 1;
+      classified.edits += 1;
+      continue;
+    }
+    if (item.type !== "CommandExecution") continue;
+    toolCalls += 1;
+    toolBreakdown.CommandExecution = (toolBreakdown.CommandExecution ?? 0) + 1;
+    const command = Array.isArray(item.command)
+      ? item.command
+          .filter((part): part is string => typeof part === "string")
+          .join(" ")
+      : "";
+    if (/\bquoin\b[^\n]*?\bwrite\b/.test(command)) {
+      classified.contextFetches += 1;
+      for (const match of command.matchAll(/--types[=\s]+([^\s'"]+)/g)) {
+        typePacks.add(match[1] ?? "");
+      }
+    }
+    if (/\bquire\b[^\n]*?\bvalidate\b/.test(command)) {
+      classified.validationAttempts += 1;
+      if (item.exit_code !== 0) classified.validationFailures += 1;
+    }
+    if (
+      /(\bquoin\b[^\n]*?\b(review|matrix|to-plan)\b)|(\bix-flow\b)/.test(
+        command,
+      )
+    ) {
+      classified.flowOps += 1;
+    }
+  }
+  tokenUsage.contextInput = tokenUsage.input + tokenUsage.cacheRead;
+  tokenUsage.total = tokenUsage.contextInput + tokenUsage.output;
+
+  return {
+    metricStatus: "available",
+    tokenUsage,
+    toolCalls,
+    toolBreakdown,
+    classified,
+    distinctTypePacks: typePacks.size,
+    assistantTurns,
+    modelActiveMs:
+      timestamps.length >= 2
+        ? Math.max(...timestamps) - Math.min(...timestamps)
+        : 0,
+    transcriptLines: lines.length,
+  };
+}
