@@ -27,13 +27,13 @@ after resolving the findings below.
 
 ## Findings
 
-| ID      | Severity | Summary                                                              | Refs            | Escape Cause        |
-| ------- | -------- | -------------------------------------------------------------------- | --------------- | ------------------- |
-| FND-001 | high     | Existing `--keep` does not retain transcripts stored outside workDir | FR-004 Behavior | missing-requirement |
-| FND-002 | medium   | A digest alone could falsely imply bytes remained reopenable | FR-004-AC-1..3 | missing-requirement |
-| FND-003 | medium   | Unknown versions and contradictory identity fields lacked an owner | FR-004-AC-4 | missing-requirement |
+| ID      | Severity | Summary                                                                                                 | Refs                      | Escape Cause        |
+| ------- | -------- | ------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------- |
+| FND-001 | high     | Existing `--keep` does not retain transcripts stored outside workDir                                    | FR-004 Behavior           | missing-requirement |
+| FND-002 | medium   | A digest alone could falsely imply bytes remained reopenable                                            | FR-004-AC-1..3            | missing-requirement |
+| FND-003 | medium   | Unknown versions and contradictory identity fields lacked an owner                                      | FR-004-AC-4               | missing-requirement |
 | FND-004 | high     | Metrics parsed from the mutable source path could describe different bytes from a later retained digest | FR-004-CON-3; FR-004-AC-2 | missing-requirement |
-| FND-005 | medium   | The consumer had no exact released package identity for the new contract | FR-004-AC-6 | missing-requirement |
+| FND-005 | medium   | The consumer had no exact released package identity for the new contract                                | FR-004-AC-6               | missing-requirement |
 
 ## Dispositions
 

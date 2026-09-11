@@ -13,6 +13,7 @@ import { buildReport, buildScenarioResult, writeReport } from "./report.js";
 import { defaultKickoffLine, defaultTaskBrief } from "./sentinels.js";
 import { selectScenarios } from "./suite.js";
 import { defaultReportsDir, defaultWorkspace } from "./workspace.js";
+import { captureTranscript } from "./transcript.js";
 import type {
   AgentDriver,
   AgentRunResult,
@@ -44,9 +45,14 @@ export async function runSuite<TContext extends EvalContext>(
           scenario.mode === "deterministic"
             ? runDeterministic(scenario, ctx)
             : await runAgentScenario(suite, scenario, ctx, opts);
+        const transcript = captureTranscript(
+          ctx.workDir,
+          ctx.transcriptPath,
+          opts.keep,
+        );
         const metrics = normalizeMetrics(
-          ctx.transcriptPath && run.exitReason !== "error"
-            ? getDriver(suite, opts).parseMetrics?.(ctx.transcriptPath)
+          transcript.metricsPath && run.exitReason !== "error"
+            ? getDriver(suite, opts).parseMetrics?.(transcript.metricsPath)
             : undefined,
         );
         const assertion = await assertRun(suite, ctx, scenario, run);
@@ -58,7 +64,9 @@ export async function runSuite<TContext extends EvalContext>(
           assertion,
           workDir: ctx.workDir,
           sessionId: ctx.sessionId,
-          transcriptPath: ctx.transcriptPath,
+          transcriptDigest: transcript.digest,
+          transcriptRetention: transcript.retention,
+          transcriptPath: transcript.path,
         });
       } finally {
         if (!opts.keep) ctx.cleanup();

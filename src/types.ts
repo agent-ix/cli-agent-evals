@@ -161,6 +161,8 @@ export interface ScenarioSample {
   failures: string[];
   workDir: string;
   sessionId: string;
+  transcriptDigest: string | null;
+  transcriptRetention: "retained" | "not-retained" | "unavailable";
   transcriptPath?: string;
 }
 
@@ -174,6 +176,7 @@ export interface ScenarioResult {
 }
 
 export interface EvalReport {
+  reportVersion: "cli-agent-evals.report/v1";
   ok: boolean;
   generatedAt: string;
   suite: string;

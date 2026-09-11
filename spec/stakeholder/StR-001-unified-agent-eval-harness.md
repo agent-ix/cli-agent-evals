@@ -19,9 +19,7 @@ leaving project-specific prompts, fixtures, and assertions in each owning repo.
 
 ## Validation Criteria
 
-
-| ID | Criteria | Validation |
-|----|----------|------------|
-| StR-001-VC-1 | The toolkit exposes a reusable library API and a `cli-evals` command. | Test |
+| ID           | Criteria                                                                        | Validation  |
+| ------------ | ------------------------------------------------------------------------------- | ----------- |
+| StR-001-VC-1 | The toolkit exposes a reusable library API and a `cli-evals` command.           | Test        |
 | StR-001-VC-2 | Existing `ix-flow` and `quoin` eval suites can load through the shared library. | Integration |
-

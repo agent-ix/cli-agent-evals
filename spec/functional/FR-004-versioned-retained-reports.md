@@ -71,21 +71,21 @@ verify retained transcript identity without reimplementing agent-host execution.
 
 ## Constraints
 
-| ID | Constraint | Type | Validation |
-| --- | --- | --- | --- |
+| ID           | Constraint                                                                                                          | Type           | Validation          |
+| ------------ | ------------------------------------------------------------------------------------------------------------------- | -------------- | ------------------- |
 | FR-004-CON-1 | cli-agent-evals SHALL NOT encode Engineering Assurance scenario semantics, aggregation decisions, or release policy | Responsibility | Inspection (TC-014) |
-| FR-004-CON-2 | A reported transcript path SHALL be a safe relative path beneath its sample's `workDir` | Security | Test (TC-012) |
-| FR-004-CON-3 | Digest and metric observations SHALL originate from the same immutable scenario snapshot bytes | Integrity | Test (TC-010) |
+| FR-004-CON-2 | A reported transcript path SHALL be a safe relative path beneath its sample's `workDir`                             | Security       | Test (TC-012)       |
+| FR-004-CON-3 | Digest and metric observations SHALL originate from the same immutable scenario snapshot bytes                      | Integrity      | Test (TC-010)       |
 
 ## Acceptance Criteria
 
-| ID          | Criteria                                                                                                                     | Verification                |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
-| FR-004-AC-1 | Default cleanup reports observed transcript identity as not retained, exposes no reopenable path, and removes the workspace | Test (TC-009) |
-| FR-004-AC-2 | `--keep` produces a versioned report whose safe relative path, lowercase digest, retained state, and metrics match the copied bytes | Test (TC-010) |
-| FR-004-AC-3 | A consumer detects mutation or deletion using only `workDir`, retained `transcriptPath`, and `transcriptDigest` | Test (TC-011) |
-| FR-004-AC-4 | The strict decoder rejects unknown versions, malformed identities, unsafe paths, contradictory retention, and unknown fields | Test (TC-012) |
-| FR-004-AC-5 | Existing report metrics, scenario outcomes, aggregation, and cleanup behavior remain unchanged outside the explicit transcript-retention contract | Test (TC-003) |
+| ID          | Criteria                                                                                                                                                | Verification        |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| FR-004-AC-1 | Default cleanup reports observed transcript identity as not retained, exposes no reopenable path, and removes the workspace                             | Test (TC-009)       |
+| FR-004-AC-2 | `--keep` produces a versioned report whose safe relative path, lowercase digest, retained state, and metrics match the copied bytes                     | Test (TC-010)       |
+| FR-004-AC-3 | A consumer detects mutation or deletion using only `workDir`, retained `transcriptPath`, and `transcriptDigest`                                         | Test (TC-011)       |
+| FR-004-AC-4 | The strict decoder rejects unknown versions, malformed identities, unsafe paths, contradictory retention, and unknown fields                            | Test (TC-012)       |
+| FR-004-AC-5 | Existing report metrics, scenario outcomes, aggregation, and cleanup behavior remain unchanged outside the explicit transcript-retention contract       | Test (TC-003)       |
 | FR-004-AC-6 | The first release carrying the v1 decoder names one exact package version, source revision, and public-registry artifact integrity for consumers to pin | Inspection (TC-013) |
 
 ## Dependencies
