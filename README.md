@@ -57,7 +57,8 @@ Run canaries:
 cli-evals run --suite ./cli-agent-evals.config.mjs --canary --agent claude --model sonnet
 ```
 
-Run one scenario and keep the workdir:
+Run one scenario in release-evidence mode, retaining its workdir and captured
+transcript:
 
 ```bash
 cli-evals run --suite ./cli-agent-evals.config.mjs --filter EV-001 --agent codex --model gpt-5 --keep

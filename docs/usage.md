@@ -18,7 +18,8 @@ Run all scenarios:
 cli-evals run --suite ./cli-agent-evals.config.mjs --all --agent claude --model sonnet --repeats 3
 ```
 
-Run one scenario:
+Run one scenario in release-evidence mode, retaining its workspace and captured
+transcript:
 
 ```bash
 cli-evals run --suite ./cli-agent-evals.config.mjs --filter EV-013 --agent claude --model sonnet --keep

@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { builtinDrivers } from "./drivers.js";
+import { parseEvalReport } from "./report-schema.js";
 import { runSuite } from "./runner.js";
 import { loadSuite } from "./suite.js";
 import { resolveSuitePath } from "./workspace.js";
@@ -58,7 +59,7 @@ class RunCommand extends SuiteCommand {
     model: Flags.string({ description: "Agent model id." }),
     repeats: Flags.integer({ description: "Repeat count.", default: 1 }),
     keep: Flags.boolean({
-      description: "Keep scenario workdirs.",
+      description: "Keep scenario workdirs and retained release evidence.",
       default: false,
     }),
     report: Flags.string({ description: "Report JSON output path." }),
@@ -98,7 +99,7 @@ class RebuildCommand extends SuiteCommand {
   async run(): Promise<void> {
     const { flags } = await this.parse(RebuildCommand);
     const path = resolve(flags.report);
-    const report = JSON.parse(readFileSync(path, "utf8"));
+    const report = parseEvalReport(JSON.parse(readFileSync(path, "utf8")));
     printSummary(this, report);
     this.log(`\nrebuilt summary from: ${path}`);
   }

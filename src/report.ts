@@ -10,6 +10,8 @@ import type {
   ScenarioResult,
 } from "./types.js";
 
+export const REPORT_VERSION = "cli-agent-evals.report/v1" as const;
+
 function percentile(
   values: Array<number | null | undefined>,
   p: number,
@@ -38,6 +40,8 @@ export function buildScenarioResult(
     assertion: AssertionResult;
     workDir: string;
     sessionId: string;
+    transcriptDigest: string | null;
+    transcriptRetention: ScenarioResult["runs"][number]["transcriptRetention"];
     transcriptPath?: string;
   }>,
 ): ScenarioResult {
@@ -54,6 +58,8 @@ export function buildScenarioResult(
     failures: run.assertion.failures ?? [],
     workDir: run.workDir,
     sessionId: run.sessionId,
+    transcriptDigest: run.transcriptDigest,
+    transcriptRetention: run.transcriptRetention,
     transcriptPath: run.transcriptPath,
   }));
   const passCount = samples.filter((sample) => sample.ok).length;
@@ -81,6 +87,7 @@ export function buildReport(
 ): EvalReport {
   const flat = results.flatMap((result) => result.runs);
   return {
+    reportVersion: REPORT_VERSION,
     ok: results.every((result) => result.ok),
     generatedAt: new Date().toISOString(),
     suite,

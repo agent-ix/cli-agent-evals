@@ -1,5 +1,7 @@
 export { defineSuite, loadSuite, selectScenarios } from "./suite.js";
 export { runSuite } from "./runner.js";
+export { parseEvalReport } from "./report-schema.js";
+export { REPORT_VERSION } from "./report.js";
 export {
   builtinDrivers,
   claudeTranscriptPath,
@@ -33,6 +35,7 @@ export type {
   EvalSelector,
   EvalSuite,
   ScenarioMetrics,
+  ScenarioSample,
   ScenarioResult,
   TokenUsage,
   WorkspaceFactory,

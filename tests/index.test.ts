@@ -6,6 +6,7 @@ import {
   defineSuite,
   findSentinelInText,
   findSentinelInTranscript,
+  parseEvalReport,
   parseClaudeMetrics,
   runSuite,
   selectScenarios,
@@ -144,6 +145,12 @@ test("TC-003: runSuite executes deterministic scenarios and writes a report", as
     keep: false,
   });
   expect(report.ok).toBe(true);
+  expect(report.reportVersion).toBe("cli-agent-evals.report/v1");
   expect(report.results[0]?.passRate).toBe("1/1");
+  expect(report.results[0]?.runs[0]?.transcriptRetention).toBe("unavailable");
+  expect(report.results[0]?.runs[0]?.transcriptDigest).toBeNull();
   expect(reportPath).toContain("latest.json");
+  expect(parseEvalReport(JSON.parse(readFileSync(reportPath, "utf8")))).toEqual(
+    report,
+  );
 });
