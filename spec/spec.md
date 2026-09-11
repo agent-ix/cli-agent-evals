@@ -45,6 +45,7 @@ requirements define live validation expectations.
 | FR-001  | Suite configuration API            | Functional     |
 | FR-002  | Live agent runner CLI              | Functional     |
 | FR-003  | Agent plugin distribution          | Functional     |
+| FR-004  | Versioned retained reports         | Functional     |
 | NFR-001 | Real-agent validation              | Non-Functional |
 | IT-001  | Converted ix-flow and quoin suites | Integration    |
 
