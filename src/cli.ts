@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { builtinDrivers } from "./drivers.js";
+import { describeProvider } from "./provider.js";
 import { parseEvalReport } from "./report-schema.js";
 import { runSuite } from "./runner.js";
 import { loadSuite } from "./suite.js";
@@ -34,7 +35,10 @@ class ListCommand extends SuiteCommand {
 
   async run(): Promise<void> {
     const suite = await this.suite();
-    for (const scenario of suite.scenarios) {
+    const scenarios = suite.provider
+      ? describeProvider(suite.provider)
+      : (suite.scenarios ?? []);
+    for (const scenario of scenarios) {
       this.log(
         [
           scenario.id.padEnd(8),

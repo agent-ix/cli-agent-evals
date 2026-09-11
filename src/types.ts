@@ -70,6 +70,13 @@ export interface AssertionAdapter<TContext extends EvalContext = EvalContext> {
   ): AssertionResult | Promise<AssertionResult>;
 }
 
+/** One direct, consumer-owned external semantic provider. */
+export interface ExternalScenarioProvider {
+  command: string;
+  args?: string[];
+  timeoutMs?: number;
+}
+
 export interface AgentRunResult {
   ok: boolean;
   exitReason: "complete" | "failed" | "timeout" | "exit" | "error";
@@ -137,7 +144,8 @@ export interface DriverProbeResult {
 export interface EvalSuite<TContext extends EvalContext = EvalContext> {
   name: string;
   rootDir: string;
-  scenarios: EvalScenario<TContext>[];
+  scenarios?: EvalScenario<TContext>[];
+  provider?: ExternalScenarioProvider;
   reportsDir?: string;
   workspace?: WorkspaceFactory<TContext>;
   assert?: AssertionAdapter<TContext>;
