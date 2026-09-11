@@ -10,6 +10,11 @@ import {
   unavailableMetrics,
 } from "./metrics.js";
 import { buildReport, buildScenarioResult, writeReport } from "./report.js";
+import {
+  assertProvider,
+  describeProvider,
+  prepareProvider,
+} from "./provider.js";
 import { defaultKickoffLine, defaultTaskBrief } from "./sentinels.js";
 import { selectScenarios } from "./suite.js";
 import { defaultReportsDir, defaultWorkspace } from "./workspace.js";
@@ -30,7 +35,15 @@ export async function runSuite<TContext extends EvalContext>(
   suite: EvalSuite<TContext>,
   opts: EvalRunOptions,
 ): Promise<{ report: EvalReport; reportPath: string }> {
-  const scenarios = selectScenarios(suite.scenarios, opts.selector);
+  if (suite.provider && suite.scenarios) {
+    throw new Error(
+      "suite must select either scenarios or an external provider",
+    );
+  }
+  const catalogue = suite.provider
+    ? describeProvider(suite.provider)
+    : (suite.scenarios ?? []);
+  const scenarios = selectScenarios(catalogue, opts.selector);
   if (scenarios.length === 0) throw new Error("no scenarios selected");
   const results = [];
 
@@ -40,11 +53,25 @@ export async function runSuite<TContext extends EvalContext>(
       const ctx = (suite.workspace?.(scenario, suite) ??
         defaultWorkspace(scenario, suite)) as TContext;
       try {
-        await scenario.setup?.(ctx);
-        const run =
-          scenario.mode === "deterministic"
-            ? runDeterministic(scenario, ctx)
-            : await runAgentScenario(suite, scenario, ctx, opts);
+        let prepared:
+          | { prompt: string; environment: Record<string, string> }
+          | undefined;
+        let providerFailure: AssertionResult | undefined;
+        if (suite.provider) {
+          try {
+            prepared = prepareProvider(suite.provider, ctx, scenario);
+          } catch (error) {
+            providerFailure = providerError("prepare", error);
+          }
+        }
+        if (!suite.provider) await scenario.setup?.(ctx);
+        const run = providerFailure
+          ? unavailableProviderRun()
+          : prepared
+            ? await runAgentScenario(suite, scenario, ctx, opts, prepared)
+            : scenario.mode === "deterministic"
+              ? runDeterministic(scenario, ctx)
+              : await runAgentScenario(suite, scenario, ctx, opts);
         const transcript = captureTranscript(
           ctx.workDir,
           ctx.transcriptPath,
@@ -55,7 +82,8 @@ export async function runSuite<TContext extends EvalContext>(
             ? getDriver(suite, opts).parseMetrics?.(transcript.metricsPath)
             : undefined,
         );
-        const assertion = await assertRun(suite, ctx, scenario, run);
+        const assertion =
+          providerFailure ?? (await assertRun(suite, ctx, scenario, run));
         runs.push({
           ok: run.ok && assertion.ok,
           wallMs: run.wallMs,
@@ -82,6 +110,19 @@ export async function runSuite<TContext extends EvalContext>(
     opts.reportPath,
   );
   return { report, reportPath };
+}
+
+function unavailableProviderRun(): AgentRunResult {
+  return { ok: false, exitReason: "error", wallMs: 0 };
+}
+
+function providerError(operation: string, error: unknown): AssertionResult {
+  return {
+    ok: false,
+    failures: [
+      `provider ${operation} failed: ${error instanceof Error ? error.message : String(error)}`,
+    ],
+  };
 }
 
 function normalizeMetrics(
@@ -113,12 +154,14 @@ async function runAgentScenario<TContext extends EvalContext>(
   scenario: EvalScenario<TContext>,
   ctx: TContext,
   opts: EvalRunOptions,
+  prepared?: { prompt: string; environment: Record<string, string> },
 ): Promise<AgentRunResult> {
   const driver = getDriver(suite, opts);
   const task =
-    typeof scenario.prompt === "function"
+    prepared?.prompt ??
+    (typeof scenario.prompt === "function"
       ? scenario.prompt(ctx)
-      : (scenario.prompt ?? "");
+      : (scenario.prompt ?? ""));
   const brief = suite.buildTaskBrief?.(scenario, ctx) ?? defaultTaskBrief(task);
   writeFileSync(join(ctx.cwd, "EVAL_TASK.md"), brief);
   const kickoff = suite.kickoffLine?.(scenario, ctx) ?? defaultKickoffLine();
@@ -127,6 +170,7 @@ async function runAgentScenario<TContext extends EvalContext>(
     PATH: pathWithShim(shimPath),
     ...(suite.extraEnv?.(ctx) ?? {}),
     ...(scenario.env?.(ctx) ?? {}),
+    ...(prepared?.environment ?? {}),
   };
   const env = {
     ...process.env,
@@ -224,6 +268,13 @@ async function assertRun<TContext extends EvalContext>(
   scenario: EvalScenario<TContext>,
   run: AgentRunResult,
 ): Promise<AssertionResult> {
+  if (suite.provider) {
+    try {
+      return assertProvider(suite.provider, ctx, scenario, run);
+    } catch (error) {
+      return providerError("assert", error);
+    }
+  }
   if (suite.assert) return await suite.assert(ctx, scenario, run);
   return {
     ok: run.ok,

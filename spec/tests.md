@@ -18,6 +18,9 @@ type: TestMatrix
 | FR-002         | FR-002-AC-3              | TC-007                 | ✅ Complete                                                           |
 | FR-004         | FR-004-AC-1..FR-004-AC-5 | TC-003, TC-009..TC-012 | ✅ Complete                                                           |
 | FR-004         | FR-004-AC-6              | TC-013                 | 🚧 Planned pending public release                                     |
+| FR-005         | FR-005-AC-1              | TC-015                 | ✅ Complete                                                           |
+| FR-005         | FR-005-AC-2              | TC-016                 | ✅ Complete                                                           |
+| FR-005         | FR-005-AC-3              | TC-017                 | ✅ Complete                                                           |
 
 ### Constraint Coverage
 
@@ -54,3 +57,6 @@ type: TestMatrix
 | TC-012  | Strict report-contract decoding        | Unit        | P0       | FR-004-AC-4              | ✅ Complete                                                           |
 | TC-013  | Released report-contract identity      | Inspection  | P0       | FR-004-AC-6              | 🚧 Planned                                                            |
 | TC-014  | Consumer-neutral ownership boundary    | Inspection  | P0       | FR-004-CON-1             | ✅ Complete                                                           |
+| TC-015  | External provider happy path           | Unit        | P0       | FR-005-AC-1              | ✅ Complete                                                           |
+| TC-016  | External provider refusal path         | Unit        | P0       | FR-005-AC-2              | ✅ Complete                                                           |
+| TC-017  | External provider boundary             | Static      | P0       | FR-005-AC-3              | ✅ Complete                                                           |

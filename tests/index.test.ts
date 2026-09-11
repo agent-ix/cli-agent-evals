@@ -4,13 +4,43 @@ import { join } from "node:path";
 
 import {
   defineSuite,
+  describeProvider,
   findSentinelInText,
   findSentinelInTranscript,
+  prepareProvider,
+  assertProvider,
   parseEvalReport,
   parseClaudeMetrics,
   runSuite,
   selectScenarios,
 } from "../src/index.js";
+
+function providerFixture(mode: string): string {
+  const root = mkdtempSync(join(tmpdir(), "cli-evals-provider-"));
+  const path = join(root, "provider.mjs");
+  writeFileSync(
+    path,
+    `import { readFileSync } from "node:fs";
+const mode = ${JSON.stringify(mode)};
+if (mode === "exit") process.exit(3);
+if (mode === "timeout") Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50);
+if (mode === "oversized") {
+  process.stdout.write("x".repeat(1024 * 1024 + 1));
+  process.exit(0);
+}
+const request = JSON.parse(readFileSync(0, "utf8"));
+const result = mode === "wrong-protocol"
+  ? { protocol: "wrong/v1", operation: request.operation }
+  : request.operation === "describe"
+    ? { protocol: "cli-agent-evals.external-provider-result/v1", operation: "describe", scenarios: [{ id: "EA-001", use_case: "existing-profile", canary: true }] }
+    : request.operation === "prepare"
+      ? { protocol: "cli-agent-evals.external-provider-result/v1", operation: "prepare", prompt: "perform the fixture task", environment: mode === "bad-environment" ? { FIXTURE_MODE: 1 } : { FIXTURE_MODE: "yes" } }
+      : { protocol: "cli-agent-evals.external-provider-result/v1", operation: "assert", assertion: { ok: true, checks: { source: "provider" }, failures: [] } };
+process.stdout.write(JSON.stringify(result) + "\\n");
+`,
+  );
+  return path;
+}
 
 test("TC-001: selectScenarios requires exactly one selector", () => {
   const scenarios = [{ id: "EV-001", canary: true }, { id: "EV-002" }];
@@ -153,4 +183,103 @@ test("TC-003: runSuite executes deterministic scenarios and writes a report", as
   expect(parseEvalReport(JSON.parse(readFileSync(reportPath, "utf8")))).toEqual(
     report,
   );
+});
+
+test("TC-015: external provider describes prepares and asserts through the typed boundary", () => {
+  const provider = { command: process.execPath, args: [providerFixture("ok")] };
+  const [scenario] = describeProvider(provider);
+  expect(scenario).toMatchObject({
+    id: "EA-001",
+    useCase: "existing-profile",
+    canary: true,
+  });
+  const context = {
+    id: "EA-001",
+    workDir: "/tmp/work",
+    cwd: "/tmp/work",
+    sessionId: "session-1",
+    reportDir: "/tmp/reports",
+    data: {},
+    cleanup() {},
+  };
+  expect(prepareProvider(provider, context, scenario!)).toEqual({
+    prompt: "perform the fixture task",
+    environment: { FIXTURE_MODE: "yes" },
+  });
+  expect(
+    assertProvider(provider, context, scenario!, {
+      ok: true,
+      exitReason: "complete",
+      wallMs: 1,
+    }),
+  ).toEqual({ ok: true, checks: { source: "provider" }, failures: [] });
+});
+
+test("TC-016: external provider refuses a wrong protocol without an assertion", () => {
+  const provider = {
+    command: process.execPath,
+    args: [providerFixture("wrong-protocol")],
+  };
+  expect(() => describeProvider(provider)).toThrow(/protocol/);
+});
+
+test("TC-016: external provider refuses invalid environment and bounded process failures", async () => {
+  const context = {
+    id: "EA-001",
+    workDir: "/tmp/work",
+    cwd: "/tmp/work",
+    sessionId: "session-1",
+    reportDir: "/tmp/reports",
+    data: {},
+    cleanup() {},
+  };
+  const scenario = { id: "EA-001" };
+  expect(() =>
+    prepareProvider(
+      { command: process.execPath, args: [providerFixture("bad-environment")] },
+      context,
+      scenario,
+    ),
+  ).toThrow(/environment/);
+  expect(() =>
+    describeProvider({
+      command: process.execPath,
+      args: [providerFixture("exit")],
+    }),
+  ).toThrow(/did not complete/);
+  expect(() =>
+    describeProvider({
+      command: process.execPath,
+      args: [providerFixture("timeout")],
+      timeoutMs: 1,
+    }),
+  ).toThrow(/invocation failed/);
+  expect(() =>
+    describeProvider({
+      command: process.execPath,
+      args: [providerFixture("oversized")],
+    }),
+  ).toThrow(/response/);
+  await expect(
+    runSuite(
+      defineSuite({
+        name: "ambiguous-provider-suite",
+        rootDir: "/tmp",
+        scenarios: [{ id: "EV-001" }],
+        provider: { command: process.execPath, args: [providerFixture("ok")] },
+      }),
+      { selector: { all: true }, repeats: 1, keep: false },
+    ),
+  ).rejects.toThrow(/either scenarios or an external provider/);
+});
+
+test("TC-017: external provider remains a direct semantic boundary", () => {
+  const source = readFileSync(
+    new URL("../src/provider.ts", import.meta.url),
+    "utf8",
+  );
+  expect(source).toContain("shell: false");
+  expect(source).not.toContain("agent-pty");
+  expect(source).not.toContain("mkdtemp");
+  expect(source).not.toContain("writeReport");
 });

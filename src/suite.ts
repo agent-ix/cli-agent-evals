@@ -36,10 +36,15 @@ export async function loadSuite<TContext extends EvalContext = EvalContext>(
   if (
     !suite ||
     typeof suite.name !== "string" ||
-    !Array.isArray(suite.scenarios)
+    (!Array.isArray(suite.scenarios) && !suite.provider)
   ) {
     throw new Error(
       `suite module did not export a valid EvalSuite: ${pathOrUrl}`,
+    );
+  }
+  if (Array.isArray(suite.scenarios) && suite.provider) {
+    throw new Error(
+      `suite must select either scenarios or an external provider: ${pathOrUrl}`,
     );
   }
   return suite;

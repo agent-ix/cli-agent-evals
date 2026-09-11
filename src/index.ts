@@ -1,5 +1,10 @@
 export { defineSuite, loadSuite, selectScenarios } from "./suite.js";
 export { runSuite } from "./runner.js";
+export {
+  assertProvider,
+  describeProvider,
+  prepareProvider,
+} from "./provider.js";
 export { parseEvalReport } from "./report-schema.js";
 export { REPORT_VERSION } from "./report.js";
 export {
@@ -34,6 +39,7 @@ export type {
   EvalScenario,
   EvalSelector,
   EvalSuite,
+  ExternalScenarioProvider,
   ScenarioMetrics,
   ScenarioSample,
   ScenarioResult,
