@@ -7,6 +7,7 @@ import {
   SESSION_ROWS,
   StartupNotReadyError,
   builtinDrivers,
+  codexIsReady,
   liveScreen,
   defineSuite,
   describeProvider,
@@ -353,6 +354,21 @@ test("TC-021: a dismissed prompt in scrollback does not block readiness", async 
     pollMs: 10,
   });
   expect(enterPresses).toBe(0);
+});
+
+test("TC-022: a codex composer drawn while the model loads is not ready", () => {
+  const loading = [
+    "| model:     loading   /model to change |",
+    "› Ask Codex to do anything",
+    "  ? for shortcuts",
+  ].join("\n");
+  const loaded = [
+    "| model:     gpt-5.6-sol high   /model to change |",
+    "› Ask Codex to do anything",
+    "  ? for shortcuts",
+  ].join("\n");
+  expect(codexIsReady(loading)).toBe(false);
+  expect(codexIsReady(loaded)).toBe(true);
 });
 
 test("TC-020: a host that never becomes ready fails startup instead of timing out", async () => {

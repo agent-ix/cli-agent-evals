@@ -49,9 +49,27 @@ export class StartupNotReadyError extends Error {
   }
 }
 
+/**
+ * A composer alone does not mean the host can accept a submit. Codex draws
+ * `Ask Codex to do anything` while its status line still reads
+ * `model: loading`, and a line typed then is left sitting in the composer
+ * unsent. A driver may therefore narrow readiness beyond the shared marker.
+ */
+export function codexIsReady(screen: string): boolean {
+  return (
+    /for shortcuts|Ask Codex to do anything/i.test(screen) &&
+    !/model:\s+loading/i.test(screen)
+  );
+}
+
+function genericIsReady(screen: string): boolean {
+  return /for shortcuts|Welcome|How can I help|Ask/i.test(screen);
+}
+
 async function genericStartup(
   session: AgentPtySession,
   timeoutMs: number,
+  isReady: (screen: string) => boolean = genericIsReady,
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -71,7 +89,7 @@ async function genericStartup(
       await delay(1500);
       continue;
     }
-    if (/for shortcuts|Welcome|How can I help|Ask/i.test(screen)) {
+    if (isReady(screen)) {
       await delay(800);
       return;
     }
@@ -124,7 +142,8 @@ export const builtinDrivers: Record<string, AgentDriver> = {
         ...(opts.model ? ["--model", opts.model] : []),
       ];
     },
-    startup: (session, opts) => genericStartup(session, opts.timeoutMs),
+    startup: (session, opts) =>
+      genericStartup(session, opts.timeoutMs, codexIsReady),
     probe: async () => commandProbe("codex"),
   },
   opencode: {

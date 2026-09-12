@@ -11,6 +11,7 @@ export {
   SESSION_ROWS,
   StartupNotReadyError,
   builtinDrivers,
+  codexIsReady,
   liveScreen,
   claudeTranscriptPath,
   resolveDriver,
