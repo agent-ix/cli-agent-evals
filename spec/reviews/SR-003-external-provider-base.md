@@ -9,12 +9,14 @@ review_set: base
 
 ## Summary
 
-Reviewed FR-005 against the existing suite and runner boundaries. The contract
-keeps consumer semantics external while retaining runner, workspace,
-transcript, metrics, selection, and report ownership in cli-agent-evals.
+Reviewed FR-005 against the existing suite and runner boundaries, including the
+runner executable identity required by a retained external-provider evaluation.
+The contract keeps consumer semantics external while retaining runner,
+workspace, transcript, metrics, selection, report ownership, and executable
+identity in cli-agent-evals.
 
 ## Findings
 
-| ID      | Severity | Summary                                                                                                                                                         | Refs                           |
-| ------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| FND-001 | low      | No base-review issues found: protocol revisions, operations, owned fields, refusal cases, compatibility with in-process suites, and test coverage are explicit. | FR-005, TC-015, TC-016, TC-017 |
+| ID      | Severity | Summary                                                                                                                                                                              | Refs                                   |
+| ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| FND-001 | low      | No base-review issues found: protocol revisions, operations, owned fields, refusal cases, compatibility with in-process suites, executable identity, and test coverage are explicit. | FR-005, TC-015, TC-016, TC-017, TC-018 |
