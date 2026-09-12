@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -282,4 +283,18 @@ test("TC-017: external provider remains a direct semantic boundary", () => {
   expect(source).not.toContain("agent-pty");
   expect(source).not.toContain("mkdtemp");
   expect(source).not.toContain("writeReport");
+});
+
+test("TC-018: runner reports its package version without loading a suite", () => {
+  const packageVersion = JSON.parse(
+    readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+  ).version;
+  const result = spawnSync(
+    process.execPath,
+    [new URL("../bin/cli-evals.js", import.meta.url).pathname, "--version"],
+    { encoding: "utf8" },
+  );
+  expect(result.status).toBe(0);
+  expect(result.stdout).toBe(`${packageVersion}\n`);
+  expect(result.stderr).toBe("");
 });

@@ -64,6 +64,10 @@ metrics, and report construction.
 - The runner SHALL retain its existing in-process suite API. A provider is an
   alternative semantic source, not a second runner, report format, workspace
   system, agent driver, or transcript collector.
+- The runner executable SHALL return its package version as one non-empty line
+  for `--version` without loading a suite, contacting a host, or invoking a
+  provider. A consumer that retains a provider evaluation MAY bind that exact
+  executable/version pair as part of its governing identity.
 
 ## Acceptance Criteria
 
@@ -72,6 +76,7 @@ metrics, and report construction.
 | FR-005-AC-1 | A fixture provider can describe selected scenarios, prepare one isolated workspace, and return a typed assertion that appears unchanged in the normal report.                                                     | Unit (TC-015)   |
 | FR-005-AC-2 | Wrong protocol, operation, response shape, duplicate scenario, invalid environment, nonzero exit, timeout, and over-limit request or response each produce a failed selected run with no false passing assertion. | Unit (TC-016)   |
 | FR-005-AC-3 | The provider path does not invoke a shell or own agent processes, workspaces, transcript collection, metrics, selector parsing, or report serialization.                                                          | Static (TC-017) |
+| FR-005-AC-4 | Invoking the runner with `--version` succeeds without a suite or provider and returns only its non-empty package version on standard output.                                                                      | Test (TC-018)   |
 
 ## Dependencies
 

@@ -21,6 +21,7 @@ type: TestMatrix
 | FR-005         | FR-005-AC-1              | TC-015                 | ✅ Complete                                                           |
 | FR-005         | FR-005-AC-2              | TC-016                 | ✅ Complete                                                           |
 | FR-005         | FR-005-AC-3              | TC-017                 | ✅ Complete                                                           |
+| FR-005         | FR-005-AC-4              | TC-018                 | ✅ Complete                                                           |
 
 ### Constraint Coverage
 
@@ -60,3 +61,4 @@ type: TestMatrix
 | TC-015  | External provider happy path           | Unit        | P0       | FR-005-AC-1              | ✅ Complete                                                           |
 | TC-016  | External provider refusal path         | Unit        | P0       | FR-005-AC-2              | ✅ Complete                                                           |
 | TC-017  | External provider boundary             | Static      | P0       | FR-005-AC-3              | ✅ Complete                                                           |
+| TC-018  | Runner executable identity             | Unit        | P0       | FR-005-AC-4              | ✅ Complete                                                           |
