@@ -7,8 +7,13 @@ export {
 } from "./provider.js";
 export { parseEvalReport } from "./report-schema.js";
 export { REPORT_VERSION } from "./report.js";
+export { KICKOFF_SUBMIT_DELAY_MS } from "./runner.js";
 export {
+  SESSION_ROWS,
+  StartupNotReadyError,
   builtinDrivers,
+  codexIsReady,
+  liveScreen,
   claudeTranscriptPath,
   resolveDriver,
 } from "./drivers.js";

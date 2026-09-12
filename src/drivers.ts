@@ -26,13 +26,54 @@ export function claudeTranscriptPath(ctx: EvalContext): string {
   );
 }
 
+/** Terminal rows given to every evaluation session. */
+export const SESSION_ROWS = 50;
+
+/**
+ * `AgentPtySession.capture()` returns the pane *including scrollback*, so a
+ * prompt that appeared once matches forever. Startup decisions must be made on
+ * what is on screen now, which is the final pane-height slice of that capture.
+ * Sentinel detection deliberately keeps reading the whole scrollback.
+ */
+export function liveScreen(capture: string): string {
+  return capture.split("\n").slice(-SESSION_ROWS).join("\n");
+}
+
+export class StartupNotReadyError extends Error {
+  constructor(timeoutMs: number) {
+    super(
+      `agent host did not reach a ready prompt within ${timeoutMs}ms; ` +
+        "the captured screen tail records what it was waiting on",
+    );
+    this.name = "StartupNotReadyError";
+  }
+}
+
+/**
+ * A composer alone does not mean the host can accept a submit. Codex draws
+ * `Ask Codex to do anything` while its status line still reads
+ * `model: loading`, and a line typed then is left sitting in the composer
+ * unsent. A driver may therefore narrow readiness beyond the shared marker.
+ */
+export function codexIsReady(screen: string): boolean {
+  return (
+    /for shortcuts|Ask Codex to do anything/i.test(screen) &&
+    !/model:\s+loading/i.test(screen)
+  );
+}
+
+function genericIsReady(screen: string): boolean {
+  return /for shortcuts|Welcome|How can I help|Ask/i.test(screen);
+}
+
 async function genericStartup(
   session: AgentPtySession,
   timeoutMs: number,
+  isReady: (screen: string) => boolean = genericIsReady,
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const screen = await session.capture().catch(() => "");
+    const screen = liveScreen(await session.capture().catch(() => ""));
     if (
       /Bypass Permissions mode/i.test(screen) &&
       /Yes, I accept/i.test(screen)
@@ -48,12 +89,13 @@ async function genericStartup(
       await delay(1500);
       continue;
     }
-    if (/for shortcuts|Welcome|How can I help|Ask/i.test(screen)) {
+    if (isReady(screen)) {
       await delay(800);
       return;
     }
     await delay(700);
   }
+  throw new StartupNotReadyError(timeoutMs);
 }
 
 function commandProbe(command: string): DriverProbeResult {
@@ -92,9 +134,19 @@ export const builtinDrivers: Record<string, AgentDriver> = {
     displayName: "OpenAI Codex",
     defaultCommand: "codex",
     buildArgs(_ctx, opts) {
-      return opts.model ? ["--model", opts.model] : [];
+      // An evaluation session is non-interactive after the kickoff line, so the
+      // startup update notice must never be able to consume it, and paste-burst
+      // detection must never swallow the submit that follows it.
+      return [
+        "-c",
+        "check_for_update_on_startup=false",
+        "-c",
+        "disable_paste_burst=true",
+        ...(opts.model ? ["--model", opts.model] : []),
+      ];
     },
-    startup: (session, opts) => genericStartup(session, opts.timeoutMs),
+    startup: (session, opts) =>
+      genericStartup(session, opts.timeoutMs, codexIsReady),
     probe: async () => commandProbe("codex"),
   },
   opencode: {

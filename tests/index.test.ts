@@ -4,6 +4,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import {
+  SESSION_ROWS,
+  StartupNotReadyError,
+  KICKOFF_SUBMIT_DELAY_MS,
+  builtinDrivers,
+  codexIsReady,
+  liveScreen,
   defineSuite,
   describeProvider,
   findSentinelInText,
@@ -297,4 +303,112 @@ test("TC-018: runner reports its package version without loading a suite", () =>
   expect(result.status).toBe(0);
   expect(result.stdout).toBe(`${packageVersion}\n`);
   expect(result.stderr).toBe("");
+});
+
+test("TC-019: the codex driver suppresses the startup update check", () => {
+  const args = builtinDrivers.codex!.buildArgs(
+    {} as never,
+    { agent: "codex", selector: "canary" } as never,
+  );
+  expect(args).toEqual([
+    "-c",
+    "check_for_update_on_startup=false",
+    "-c",
+    "disable_paste_burst=true",
+  ]);
+
+  const withModel = builtinDrivers.codex!.buildArgs(
+    {} as never,
+    { agent: "codex", selector: "canary", model: "gpt-5.6-sol" } as never,
+  );
+  expect(withModel).toEqual([
+    "-c",
+    "check_for_update_on_startup=false",
+    "-c",
+    "disable_paste_burst=true",
+    "--model",
+    "gpt-5.6-sol",
+  ]);
+});
+
+test("TC-021: a dismissed prompt in scrollback does not block readiness", async () => {
+  // capture() returns the pane including scrollback, so the dismissed trust
+  // prompt stays in the text forever. Only the live screen may decide startup.
+  const dismissed = [
+    "> You are in /tmp/eval",
+    "  Do you trust the contents of this directory?",
+    "› 1. Yes, continue",
+    "  2. No, quit",
+  ].join("\n");
+  const ready = ["› Ask Codex to do anything", "  ? for shortcuts"].join("\n");
+  const padding = Array.from({ length: SESSION_ROWS }, () => "").join("\n");
+  const capture = `${dismissed}\n${padding}\n${ready}`;
+
+  expect(liveScreen(capture)).not.toContain("Do you trust");
+  expect(liveScreen(capture)).toContain("Ask Codex to do anything");
+
+  let enterPresses = 0;
+  const session = {
+    capture: async () => capture,
+    sendKey: async () => {},
+    enter: async () => {
+      enterPresses += 1;
+    },
+    type: async () => {},
+    kill: async () => {},
+  };
+  await builtinDrivers.codex!.startup!(session as never, {
+    timeoutMs: 5_000,
+    pollMs: 10,
+  });
+  expect(enterPresses).toBe(0);
+});
+
+test("TC-023: the kickoff line is submitted outside the paste-burst window", () => {
+  expect(KICKOFF_SUBMIT_DELAY_MS).toBeGreaterThanOrEqual(500);
+  const source = readFileSync(
+    new URL("../src/runner.ts", import.meta.url),
+    "utf8",
+  );
+  const typed = source.indexOf("await session.type(kickoff);");
+  const settled = source.indexOf("await delay(KICKOFF_SUBMIT_DELAY_MS);");
+  const submitted = source.indexOf("await session.enter();", typed);
+  expect(typed).toBeGreaterThan(-1);
+  expect(settled).toBeGreaterThan(typed);
+  expect(submitted).toBeGreaterThan(settled);
+});
+
+test("TC-022: a codex composer drawn while the model loads is not ready", () => {
+  const loading = [
+    "| model:     loading   /model to change |",
+    "› Ask Codex to do anything",
+    "  ? for shortcuts",
+  ].join("\n");
+  const loaded = [
+    "| model:     gpt-5.6-sol high   /model to change |",
+    "› Ask Codex to do anything",
+    "  ? for shortcuts",
+  ].join("\n");
+  expect(codexIsReady(loading)).toBe(false);
+  expect(codexIsReady(loaded)).toBe(true);
+});
+
+test("TC-020: a host that never becomes ready fails startup instead of timing out", async () => {
+  const session = {
+    capture: async () => "✨ Update available! 0.153.4 -> 0.154.0",
+    sendKey: async () => {},
+    enter: async () => {},
+    type: async () => {
+      throw new Error(
+        "the kickoff line must never be typed into an unready host",
+      );
+    },
+    kill: async () => {},
+  };
+  await expect(
+    builtinDrivers.codex!.startup!(session as never, {
+      timeoutMs: 60,
+      pollMs: 10,
+    }),
+  ).rejects.toBeInstanceOf(StartupNotReadyError);
 });

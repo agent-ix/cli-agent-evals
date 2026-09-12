@@ -3,7 +3,10 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
-import { resolveDriver, pathWithShim } from "./drivers.js";
+import { SESSION_ROWS, resolveDriver, pathWithShim } from "./drivers.js";
+
+/** Settle window between typing the kickoff line and submitting it. */
+export const KICKOFF_SUBMIT_DELAY_MS = 750;
 import {
   findSentinelInText,
   findSentinelInTranscript,
@@ -190,15 +193,19 @@ async function runAgentScenario<TContext extends EvalContext>(
     cwd: ctx.cwd,
     env,
     cols: 200,
-    rows: 50,
+    rows: SESSION_ROWS,
     sessionName: `clievals-${suite.name}-${scenario.id.toLowerCase()}-${ctx.sessionId.slice(0, 8)}`,
   });
 
   let exitReason: AgentRunResult["exitReason"] = "timeout";
   let screenTail = "";
+  let failure: unknown;
   try {
     await driver.startup?.(session, { timeoutMs: 45_000, pollMs: 700 });
     await session.type(kickoff);
+    // A submit sent in the same instant as the typed line can be absorbed by a
+    // host's paste-burst detection and inserted as a newline instead.
+    await delay(KICKOFF_SUBMIT_DELAY_MS);
     await session.enter();
     const deadline = Date.now() + 8 * 60_000;
     while (Date.now() < deadline) {
@@ -221,11 +228,21 @@ async function runAgentScenario<TContext extends EvalContext>(
       }
       await delay(2000);
     }
-  } catch {
+  } catch (error) {
     exitReason = "error";
+    failure = error;
   } finally {
     screenTail = await session.capture().catch(() => "");
     await session.kill().catch(() => {});
+  }
+  if (failure !== undefined) {
+    // A run that never became ready is not a scenario timeout. Name it, and
+    // show the screen the host was sitting on, or the cause stays invisible.
+    const detail = failure instanceof Error ? failure.message : String(failure);
+    process.stderr.write(
+      `${scenario.id}: ${driver.id} host run did not start: ${detail}\n` +
+        `${scenario.id}: last screen:\n${screenTail}\n`,
+    );
   }
   return {
     ok: exitReason === "complete",
