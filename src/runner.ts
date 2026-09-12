@@ -196,6 +196,7 @@ async function runAgentScenario<TContext extends EvalContext>(
 
   let exitReason: AgentRunResult["exitReason"] = "timeout";
   let screenTail = "";
+  let failure: unknown;
   try {
     await driver.startup?.(session, { timeoutMs: 45_000, pollMs: 700 });
     await session.type(kickoff);
@@ -221,11 +222,21 @@ async function runAgentScenario<TContext extends EvalContext>(
       }
       await delay(2000);
     }
-  } catch {
+  } catch (error) {
     exitReason = "error";
+    failure = error;
   } finally {
     screenTail = await session.capture().catch(() => "");
     await session.kill().catch(() => {});
+  }
+  if (failure !== undefined) {
+    // A run that never became ready is not a scenario timeout. Name it, and
+    // show the screen the host was sitting on, or the cause stays invisible.
+    const detail = failure instanceof Error ? failure.message : String(failure);
+    process.stderr.write(
+      `${scenario.id}: ${driver.id} host run did not start: ${detail}\n` +
+        `${scenario.id}: last screen:\n${screenTail}\n`,
+    );
   }
   return {
     ok: exitReason === "complete",

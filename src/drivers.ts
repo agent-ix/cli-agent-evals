@@ -26,6 +26,16 @@ export function claudeTranscriptPath(ctx: EvalContext): string {
   );
 }
 
+export class StartupNotReadyError extends Error {
+  constructor(timeoutMs: number) {
+    super(
+      `agent host did not reach a ready prompt within ${timeoutMs}ms; ` +
+        "the captured screen tail records what it was waiting on",
+    );
+    this.name = "StartupNotReadyError";
+  }
+}
+
 async function genericStartup(
   session: AgentPtySession,
   timeoutMs: number,
@@ -54,6 +64,7 @@ async function genericStartup(
     }
     await delay(700);
   }
+  throw new StartupNotReadyError(timeoutMs);
 }
 
 function commandProbe(command: string): DriverProbeResult {
@@ -92,7 +103,13 @@ export const builtinDrivers: Record<string, AgentDriver> = {
     displayName: "OpenAI Codex",
     defaultCommand: "codex",
     buildArgs(_ctx, opts) {
-      return opts.model ? ["--model", opts.model] : [];
+      // An evaluation session is non-interactive after the kickoff line, so the
+      // startup update notice must never be able to consume it.
+      return [
+        "-c",
+        "check_for_update_on_startup=false",
+        ...(opts.model ? ["--model", opts.model] : []),
+      ];
     },
     startup: (session, opts) => genericStartup(session, opts.timeoutMs),
     probe: async () => commandProbe("codex"),

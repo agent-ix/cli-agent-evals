@@ -8,6 +8,7 @@ export {
 export { parseEvalReport } from "./report-schema.js";
 export { REPORT_VERSION } from "./report.js";
 export {
+  StartupNotReadyError,
   builtinDrivers,
   claudeTranscriptPath,
   resolveDriver,

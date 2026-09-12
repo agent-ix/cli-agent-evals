@@ -16,6 +16,8 @@ type: TestMatrix
 | FR-001         | FR-001-AC-2              | TC-001                 | ✅ Complete                                                           |
 | FR-002         | FR-002-AC-2              | TC-004                 | ✅ Complete                                                           |
 | FR-002         | FR-002-AC-3              | TC-007                 | ✅ Complete                                                           |
+| FR-002         | FR-002-AC-4              | TC-019                 | ✅ Complete                                                           |
+| FR-002         | FR-002-AC-5              | TC-020                 | ✅ Complete                                                           |
 | FR-004         | FR-004-AC-1..FR-004-AC-5 | TC-003, TC-009..TC-012 | ✅ Complete                                                           |
 | FR-004         | FR-004-AC-6              | TC-013                 | 🚧 Planned pending public release                                     |
 | FR-005         | FR-005-AC-1              | TC-015                 | ✅ Complete                                                           |
@@ -62,3 +64,5 @@ type: TestMatrix
 | TC-016  | External provider refusal path         | Unit        | P0       | FR-005-AC-2              | ✅ Complete                                                           |
 | TC-017  | External provider boundary             | Static      | P0       | FR-005-AC-3              | ✅ Complete                                                           |
 | TC-018  | Runner executable identity             | Unit        | P0       | FR-005-AC-4              | ✅ Complete                                                           |
+| TC-019  | Codex startup update check suppressed  | Unit        | P0       | FR-002-AC-4              | ✅ Complete                                                           |
+| TC-020  | Unready host reported as start failure | Unit        | P0       | FR-002-AC-5              | ✅ Complete                                                           |

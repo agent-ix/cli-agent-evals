@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import {
+  StartupNotReadyError,
+  builtinDrivers,
   defineSuite,
   describeProvider,
   findSentinelInText,
@@ -297,4 +299,43 @@ test("TC-018: runner reports its package version without loading a suite", () =>
   expect(result.status).toBe(0);
   expect(result.stdout).toBe(`${packageVersion}\n`);
   expect(result.stderr).toBe("");
+});
+
+test("TC-019: the codex driver suppresses the startup update check", () => {
+  const args = builtinDrivers.codex!.buildArgs(
+    {} as never,
+    { agent: "codex", selector: "canary" } as never,
+  );
+  expect(args.slice(0, 2)).toEqual(["-c", "check_for_update_on_startup=false"]);
+
+  const withModel = builtinDrivers.codex!.buildArgs(
+    {} as never,
+    { agent: "codex", selector: "canary", model: "gpt-5.6-sol" } as never,
+  );
+  expect(withModel).toEqual([
+    "-c",
+    "check_for_update_on_startup=false",
+    "--model",
+    "gpt-5.6-sol",
+  ]);
+});
+
+test("TC-020: a host that never becomes ready fails startup instead of timing out", async () => {
+  const session = {
+    capture: async () => "✨ Update available! 0.153.4 -> 0.154.0",
+    sendKey: async () => {},
+    enter: async () => {},
+    type: async () => {
+      throw new Error(
+        "the kickoff line must never be typed into an unready host",
+      );
+    },
+    kill: async () => {},
+  };
+  await expect(
+    builtinDrivers.codex!.startup!(session as never, {
+      timeoutMs: 60,
+      pollMs: 10,
+    }),
+  ).rejects.toBeInstanceOf(StartupNotReadyError);
 });
