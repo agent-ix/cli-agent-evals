@@ -4,6 +4,9 @@ import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
 import { SESSION_ROWS, resolveDriver, pathWithShim } from "./drivers.js";
+
+/** Settle window between typing the kickoff line and submitting it. */
+export const KICKOFF_SUBMIT_DELAY_MS = 750;
 import {
   findSentinelInText,
   findSentinelInTranscript,
@@ -200,6 +203,9 @@ async function runAgentScenario<TContext extends EvalContext>(
   try {
     await driver.startup?.(session, { timeoutMs: 45_000, pollMs: 700 });
     await session.type(kickoff);
+    // A submit sent in the same instant as the typed line can be absorbed by a
+    // host's paste-burst detection and inserted as a newline instead.
+    await delay(KICKOFF_SUBMIT_DELAY_MS);
     await session.enter();
     const deadline = Date.now() + 8 * 60_000;
     while (Date.now() < deadline) {

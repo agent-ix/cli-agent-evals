@@ -135,10 +135,13 @@ export const builtinDrivers: Record<string, AgentDriver> = {
     defaultCommand: "codex",
     buildArgs(_ctx, opts) {
       // An evaluation session is non-interactive after the kickoff line, so the
-      // startup update notice must never be able to consume it.
+      // startup update notice must never be able to consume it, and paste-burst
+      // detection must never swallow the submit that follows it.
       return [
         "-c",
         "check_for_update_on_startup=false",
+        "-c",
+        "disable_paste_burst=true",
         ...(opts.model ? ["--model", opts.model] : []),
       ];
     },

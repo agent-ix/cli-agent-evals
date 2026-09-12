@@ -6,6 +6,7 @@ import { join } from "node:path";
 import {
   SESSION_ROWS,
   StartupNotReadyError,
+  KICKOFF_SUBMIT_DELAY_MS,
   builtinDrivers,
   codexIsReady,
   liveScreen,
@@ -309,7 +310,12 @@ test("TC-019: the codex driver suppresses the startup update check", () => {
     {} as never,
     { agent: "codex", selector: "canary" } as never,
   );
-  expect(args.slice(0, 2)).toEqual(["-c", "check_for_update_on_startup=false"]);
+  expect(args).toEqual([
+    "-c",
+    "check_for_update_on_startup=false",
+    "-c",
+    "disable_paste_burst=true",
+  ]);
 
   const withModel = builtinDrivers.codex!.buildArgs(
     {} as never,
@@ -318,6 +324,8 @@ test("TC-019: the codex driver suppresses the startup update check", () => {
   expect(withModel).toEqual([
     "-c",
     "check_for_update_on_startup=false",
+    "-c",
+    "disable_paste_burst=true",
     "--model",
     "gpt-5.6-sol",
   ]);
@@ -354,6 +362,20 @@ test("TC-021: a dismissed prompt in scrollback does not block readiness", async 
     pollMs: 10,
   });
   expect(enterPresses).toBe(0);
+});
+
+test("TC-023: the kickoff line is submitted outside the paste-burst window", () => {
+  expect(KICKOFF_SUBMIT_DELAY_MS).toBeGreaterThanOrEqual(500);
+  const source = readFileSync(
+    new URL("../src/runner.ts", import.meta.url),
+    "utf8",
+  );
+  const typed = source.indexOf("await session.type(kickoff);");
+  const settled = source.indexOf("await delay(KICKOFF_SUBMIT_DELAY_MS);");
+  const submitted = source.indexOf("await session.enter();", typed);
+  expect(typed).toBeGreaterThan(-1);
+  expect(settled).toBeGreaterThan(typed);
+  expect(submitted).toBeGreaterThan(settled);
 });
 
 test("TC-022: a codex composer drawn while the model loads is not ready", () => {
