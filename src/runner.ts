@@ -3,7 +3,7 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
-import { resolveDriver, pathWithShim } from "./drivers.js";
+import { SESSION_ROWS, resolveDriver, pathWithShim } from "./drivers.js";
 import {
   findSentinelInText,
   findSentinelInTranscript,
@@ -190,7 +190,7 @@ async function runAgentScenario<TContext extends EvalContext>(
     cwd: ctx.cwd,
     env,
     cols: 200,
-    rows: 50,
+    rows: SESSION_ROWS,
     sessionName: `clievals-${suite.name}-${scenario.id.toLowerCase()}-${ctx.sessionId.slice(0, 8)}`,
   });
 

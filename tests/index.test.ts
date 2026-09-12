@@ -4,8 +4,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import {
+  SESSION_ROWS,
   StartupNotReadyError,
   builtinDrivers,
+  liveScreen,
   defineSuite,
   describeProvider,
   findSentinelInText,
@@ -318,6 +320,39 @@ test("TC-019: the codex driver suppresses the startup update check", () => {
     "--model",
     "gpt-5.6-sol",
   ]);
+});
+
+test("TC-021: a dismissed prompt in scrollback does not block readiness", async () => {
+  // capture() returns the pane including scrollback, so the dismissed trust
+  // prompt stays in the text forever. Only the live screen may decide startup.
+  const dismissed = [
+    "> You are in /tmp/eval",
+    "  Do you trust the contents of this directory?",
+    "› 1. Yes, continue",
+    "  2. No, quit",
+  ].join("\n");
+  const ready = ["› Ask Codex to do anything", "  ? for shortcuts"].join("\n");
+  const padding = Array.from({ length: SESSION_ROWS }, () => "").join("\n");
+  const capture = `${dismissed}\n${padding}\n${ready}`;
+
+  expect(liveScreen(capture)).not.toContain("Do you trust");
+  expect(liveScreen(capture)).toContain("Ask Codex to do anything");
+
+  let enterPresses = 0;
+  const session = {
+    capture: async () => capture,
+    sendKey: async () => {},
+    enter: async () => {
+      enterPresses += 1;
+    },
+    type: async () => {},
+    kill: async () => {},
+  };
+  await builtinDrivers.codex!.startup!(session as never, {
+    timeoutMs: 5_000,
+    pollMs: 10,
+  });
+  expect(enterPresses).toBe(0);
 });
 
 test("TC-020: a host that never becomes ready fails startup instead of timing out", async () => {

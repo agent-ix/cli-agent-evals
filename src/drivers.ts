@@ -26,6 +26,19 @@ export function claudeTranscriptPath(ctx: EvalContext): string {
   );
 }
 
+/** Terminal rows given to every evaluation session. */
+export const SESSION_ROWS = 50;
+
+/**
+ * `AgentPtySession.capture()` returns the pane *including scrollback*, so a
+ * prompt that appeared once matches forever. Startup decisions must be made on
+ * what is on screen now, which is the final pane-height slice of that capture.
+ * Sentinel detection deliberately keeps reading the whole scrollback.
+ */
+export function liveScreen(capture: string): string {
+  return capture.split("\n").slice(-SESSION_ROWS).join("\n");
+}
+
 export class StartupNotReadyError extends Error {
   constructor(timeoutMs: number) {
     super(
@@ -42,7 +55,7 @@ async function genericStartup(
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const screen = await session.capture().catch(() => "");
+    const screen = liveScreen(await session.capture().catch(() => ""));
     if (
       /Bypass Permissions mode/i.test(screen) &&
       /Yes, I accept/i.test(screen)

@@ -8,8 +8,10 @@ export {
 export { parseEvalReport } from "./report-schema.js";
 export { REPORT_VERSION } from "./report.js";
 export {
+  SESSION_ROWS,
   StartupNotReadyError,
   builtinDrivers,
+  liveScreen,
   claudeTranscriptPath,
   resolveDriver,
 } from "./drivers.js";

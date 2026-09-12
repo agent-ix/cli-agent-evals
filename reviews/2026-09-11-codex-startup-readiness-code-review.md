@@ -29,6 +29,16 @@ Three changes: the Codex driver launches with the startup update check off, an
 unready host raises `StartupNotReadyError` rather than returning silently, and
 the runner names a start failure and prints the screen the host was sitting on.
 
+That last change immediately exposed a fourth defect on the next live canary,
+which failed in 46s instead of 483s and printed what it was waiting on.
+`AgentPtySession.capture()` returns the pane _including scrollback_ — it says so
+in its own doc comment — but `genericStartup` matched prompts against the whole
+capture. The trust prompt it had already dismissed stayed in that scrollback, so
+the handler answered it again every 1.5s for the full startup budget and never
+reached the readiness check, even though the host had been ready for most of it.
+Startup decisions now read only the live screen. Sentinel detection deliberately
+keeps reading the whole scrollback, because a sentinel may have scrolled away.
+
 No timeout was weakened or removed, and the eight-minute scenario deadline is
 unchanged — the point is that an unready host must never reach it.
 
@@ -40,11 +50,12 @@ typed into it.
 
 ## Findings
 
-| ID      | Severity | Summary                                                                                                                                                                                                            | Refs                                  |
-| ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------- |
+| ID      | Severity | Summary                                                                                                                                                                                                                                            | Refs                                       |
+| ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
 | FND-002 | high     | Closed. The Codex driver did not suppress the startup update notice, so an interactive menu consumed the kickoff line and every Codex scenario burned its full eight-minute deadline. `check_for_update_on_startup=false` is now passed at launch. | src/drivers.ts:94; tests/index.test.ts:303 |
-| FND-003 | high     | Closed. `genericStartup` returned normally when its budget expired, making an unready host indistinguishable from a ready one. It now raises `StartupNotReadyError` before the kickoff line can be typed.            | src/drivers.ts:67; tests/index.test.ts:325 |
-| FND-004 | medium   | Closed. A start failure was reported as a scenario `timeout` and the captured screen tail was written nowhere, so the cause was invisible in the report and on the terminal. The runner now reports `error` and prints the last screen. | src/runner.ts:231                     |
+| FND-003 | high     | Closed. `genericStartup` returned normally when its budget expired, making an unready host indistinguishable from a ready one. It now raises `StartupNotReadyError` before the kickoff line can be typed.                                          | src/drivers.ts:67; tests/index.test.ts:325 |
+| FND-004 | medium   | Closed. A start failure was reported as a scenario `timeout` and the captured screen tail was written nowhere, so the cause was invisible in the report and on the terminal. The runner now reports `error` and prints the last screen.            | src/runner.ts:231                          |
+| FND-005 | high     | Closed. `genericStartup` matched prompts against a scrollback-inclusive capture, so an already-dismissed prompt matched forever and the handler kept answering it instead of reaching the readiness check. Startup now reads the live screen only. | src/drivers.ts:41; tests/index.test.ts:303 |
 
 ## Scope limits
 
@@ -55,8 +66,8 @@ defect failed and is recorded as failed.
 
 ## Gate results
 
-| Gate         | Result                       |
-| ------------ | ---------------------------- |
-| `make build` | pass                         |
-| `make test`  | pass (17 tests, 3 files)     |
-| `make lint`  | pass                         |
+| Gate         | Result                   |
+| ------------ | ------------------------ |
+| `make build` | pass                     |
+| `make test`  | pass (18 tests, 3 files) |
+| `make lint`  | pass                     |
