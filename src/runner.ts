@@ -244,6 +244,10 @@ async function runAgentScenario<TContext extends EvalContext>(
         `${scenario.id}: last screen:\n${screenTail}\n`,
     );
   }
+  // Some hosts only write their transcript during the session, so the path can
+  // be resolved correctly only once the session has ended.
+  ctx.transcriptPath =
+    driver.finalTranscriptPath?.(ctx, opts, t0) ?? ctx.transcriptPath;
   return {
     ok: exitReason === "complete",
     exitReason,

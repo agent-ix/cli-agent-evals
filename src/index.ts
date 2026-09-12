@@ -13,6 +13,7 @@ export {
   StartupNotReadyError,
   builtinDrivers,
   codexIsReady,
+  codexTranscriptPath,
   liveScreen,
   claudeTranscriptPath,
   resolveDriver,
@@ -27,6 +28,7 @@ export {
   findSentinelInText,
   findSentinelInTranscript,
   parseClaudeMetrics,
+  parseCodexMetrics,
   readJsonl,
   unavailableMetrics,
 } from "./metrics.js";

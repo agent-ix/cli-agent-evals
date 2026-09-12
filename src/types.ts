@@ -114,6 +114,11 @@ export interface AgentDriver<TContext extends EvalContext = EvalContext> {
   defaultCommand: string;
   buildArgs: (ctx: TContext, opts: EvalRunOptions) => string[];
   transcriptPath?: (ctx: TContext, opts: EvalRunOptions) => string | undefined;
+  finalTranscriptPath?: (
+    ctx: TContext,
+    opts: EvalRunOptions,
+    startedAtMs: number,
+  ) => string | undefined;
   startup?: (
     session: AgentPtySession,
     opts: AgentStartupOptions,
