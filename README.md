@@ -1,5 +1,7 @@
 # CLI Agent Evals
 
+[![Discord](https://img.shields.io/badge/Discord-Join%20us-5865F2?logo=discord&logoColor=white)](https://discord.gg/6qsdhSPE)
+
 Unified live eval toolkit for coding-agent CLIs.
 
 `cli-evals` runs the same scenario suite across Claude Code, OpenAI Codex,
