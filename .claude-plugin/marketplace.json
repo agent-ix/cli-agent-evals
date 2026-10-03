@@ -1,9 +1,16 @@
 {
   "name": "cli-agent-evals",
-  "displayName": "CLI Agent Evals",
-  "description": "Unified live eval toolkit for coding-agent CLIs.",
-  "source": {
-    "type": "github",
-    "repo": "agent-ix/cli-agent-evals"
-  }
+  "owner": {
+    "name": "Agent IX"
+  },
+  "metadata": {
+    "description": "Live evaluation skills for coding-agent CLIs."
+  },
+  "plugins": [
+    {
+      "name": "cli-agent-evals",
+      "source": "./",
+      "description": "Run and author live CLI eval suites across coding agents."
+    }
+  ]
 }
