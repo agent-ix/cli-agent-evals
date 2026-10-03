@@ -1,6 +1,7 @@
 # CLI Agent Evals
 
 [![Discord](https://img.shields.io/badge/Discord-Join%20us-5865F2?logo=discord&logoColor=white)](https://discord.gg/6qsdhSPE)
+[![Agent IX Plugins](https://github.com/agent-ix/agent-plugins/raw/refs/heads/main/assets/agent-ix-plugins.svg)](https://github.com/agent-ix/agent-plugins)
 
 Unified live eval toolkit for coding-agent CLIs.
 
@@ -77,15 +78,15 @@ cli-evals rebuild --report evals/reports/latest.json
 Claude Code:
 
 ```bash
-claude plugin marketplace add agent-ix/cli-agent-evals
-claude plugin install cli-agent-evals
+claude plugin marketplace add agent-ix/agent-plugins
+claude plugin install cli-agent-evals@agent-ix-public
 ```
 
 Codex:
 
 ```bash
-codex plugin marketplace add agent-ix/cli-agent-evals
-codex plugin add cli-agent-evals
+codex plugin marketplace add agent-ix/agent-plugins
+codex plugin add cli-agent-evals@agent-ix-public
 ```
 
 opencode:
@@ -112,3 +113,21 @@ Installed skills:
 - [Agent drivers](docs/agent-drivers.md)
 - [Reports](docs/reports.md)
 - [Plugin install](docs/plugin-install.md)
+
+The standalone marketplace remains available for existing installations. When
+switching an installed plugin, follow the [migration guide](https://github.com/agent-ix/agent-plugins/blob/main/docs/migration.md)
+to avoid loading the old and new identities together.
+
+## Related Agent IX plugins
+
+Browse the [Agent IX public marketplace](https://github.com/agent-ix/agent-plugins)
+for independently installable Claude Code and Codex plugins:
+
+- [Quoin](https://github.com/agent-ix/quoin) authors, reviews, and plans specifications.
+- [Quire CLI](https://github.com/agent-ix/quire-cli) explores, writes, validates, links, and traces Markdown artifacts.
+- [Engineering Assurance](https://github.com/agent-ix/engineering-assurance) prepares governed assurance decisions and evidence.
+- [IX Flow](https://github.com/agent-ix/ix-flow) runs and authors resumable agent workflows.
+- [CLI Agent Evals](https://github.com/agent-ix/cli-agent-evals) runs and authors coding-agent evaluation suites.
+
+Plugin installation adds agent skills. Install each tool's CLI and any required
+Quire modules separately, following its own installation instructions.
