@@ -1,7 +1,7 @@
 # CLI Agent Evals
 
 [![Discord](https://img.shields.io/badge/Discord-Join%20us-5865F2?logo=discord&logoColor=white)](https://discord.gg/6qsdhSPE)
-[![Agent IX Plugins](https://img.shields.io/badge/Agent%20IX-Plugins-0052CC)](https://github.com/agent-ix/agent-plugins)
+[![Agent IX Plugins](https://github.com/agent-ix/agent-plugins/raw/refs/heads/main/assets/agent-ix-plugins.svg)](https://github.com/agent-ix/agent-plugins)
 
 Unified live eval toolkit for coding-agent CLIs.
 
@@ -113,6 +113,10 @@ Installed skills:
 - [Agent drivers](docs/agent-drivers.md)
 - [Reports](docs/reports.md)
 - [Plugin install](docs/plugin-install.md)
+
+The standalone marketplace remains available for existing installations. When
+switching an installed plugin, follow the [migration guide](https://github.com/agent-ix/agent-plugins/blob/main/docs/migration.md)
+to avoid loading the old and new identities together.
 
 ## Related Agent IX plugins
 
