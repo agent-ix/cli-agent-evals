@@ -5,6 +5,8 @@ description: Draft cli-evals scenarios, suite configs, assertions, fixtures, and
 
 # CLI Evals Author
 
+If this plugin is not initialized or an Agent IX command fails, read [the cli-agent-evals setup guide](https://github.com/agent-ix/cli-agent-evals/blob/main/setup.md) for its prerequisites and local diagnosis.
+
 Use this skill when adding or changing eval coverage for a CLI project.
 
 ## Scenario Authoring
