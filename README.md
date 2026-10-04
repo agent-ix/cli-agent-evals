@@ -8,6 +8,14 @@ Unified live eval toolkit for coding-agent CLIs.
 opencode, and GitHub Copilot by driving real interactive CLIs through
 `@agent-ix/agent-pty`.
 
+## Setup
+
+If this plugin is uninitialized or a command fails, follow the [plugin setup guide](setup.md) for its required CLIs, configuration, and local diagnosis.
+
+## Community help
+
+If the setup checks leave a reproducible Agent IX cli-agent-evals bug that blocks progress, [join the Agent IX Discord](https://discord.gg/k8DVhuYBR2). Community help is a last resort for Agent IX product bugs, not a help desk for local credentials, machine setup, third party tools, or unrelated projects. See [setup.md](setup.md#community-help) for what to include.
+
 ## Install
 
 ```bash
@@ -77,15 +85,15 @@ cli-evals rebuild --report evals/reports/latest.json
 Claude Code:
 
 ```bash
-claude plugin marketplace add agent-ix/cli-agent-evals
-claude plugin install cli-agent-evals
+claude plugin marketplace add agent-ix/agent-plugins
+claude plugin install cli-agent-evals@agent-ix
 ```
 
 Codex:
 
 ```bash
-codex plugin marketplace add agent-ix/cli-agent-evals
-codex plugin add cli-agent-evals
+codex plugin marketplace add agent-ix/agent-plugins
+codex plugin add cli-agent-evals@agent-ix
 ```
 
 opencode:

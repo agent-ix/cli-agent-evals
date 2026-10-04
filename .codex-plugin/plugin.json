@@ -1,6 +1,6 @@
 {
   "name": "cli-agent-evals",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Run and author live CLI eval suites across coding agents.",
   "skills": "./skills/",
   "interface": {

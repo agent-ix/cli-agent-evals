@@ -5,6 +5,8 @@ description: Run, inspect, and debug cli-evals suites for live coding-agent CLI 
 
 # CLI Evals
 
+If this plugin is not initialized or an Agent IX command fails, read [the cli-agent-evals setup guide](https://github.com/agent-ix/cli-agent-evals/blob/main/setup.md) for its prerequisites and local diagnosis.
+
 Use this skill when a user wants to run a live eval suite, compare agents, inspect
 reports, rebuild metrics, or diagnose local prerequisites.
 
