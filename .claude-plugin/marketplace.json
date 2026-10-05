@@ -1,9 +1,0 @@
-{
-  "name": "cli-agent-evals",
-  "displayName": "CLI Agent Evals",
-  "description": "Unified live eval toolkit for coding-agent CLIs.",
-  "source": {
-    "type": "github",
-    "repo": "agent-ix/cli-agent-evals"
-  }
-}
