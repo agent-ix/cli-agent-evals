@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
-import { main } from "../dist/cli.js";
 
 if (process.argv.length === 3 && process.argv[2] === "--version") {
   const packageFile = new URL("../package.json", import.meta.url);
@@ -10,5 +9,6 @@ if (process.argv.length === 3 && process.argv[2] === "--version") {
   }
   process.stdout.write(`${version}\n`);
 } else {
+  const { main } = await import("../dist/cli.js");
   await main();
 }

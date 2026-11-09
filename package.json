@@ -38,7 +38,6 @@
     "docker:build": "docker build -t ghcr.io/agent-ix/cli-agent-evals .",
     "publish:dry-run": "pnpm publish --dry-run",
     "prepublishOnly": "pnpm run build",
-    "tags": "npm dist-tag ls @agent-ix/cli-agent-evals --registry http://npm.ix/ || echo '(package not found or registry unavailable)'",
     "pkg:add": "pnpm add",
     "pkg:add-dev": "pnpm add -D",
     "pkg:update": "pnpm update",
@@ -49,8 +48,8 @@
   },
   "dependencies": {
     "@agent-ix/agent-pty": ">=0.1.0",
-    "@agent-ix/ix-cli-core": ">=0.10.0",
-    "@oclif/core": ">=4.11.4",
+    "@agent-ix/ix-cli-core": ">=0.12.0",
+    "@oclif/core": ">=5.1.10",
     "zod": ">=4.4.3"
   },
   "devDependencies": {

@@ -1,8 +1,8 @@
 # =============================================================================
 # cli-agent-evals Makefile
 # =============================================================================
-# This Makefile provides backwards compatibility by delegating to pnpm scripts.
-# All primary functionality is defined in package.json scripts section.
+# Make targets delegate to the pnpm scripts in package.json (the reusable
+# release workflow runs make install/test/lint/build).
 # Run 'pnpm run' to see all available scripts with descriptions.
 # =============================================================================
 
@@ -103,19 +103,15 @@ docker-build:
 	pnpm run docker:build
 
 
-.PHONY: tags
-tags:
-	@pnpm run tags
-
 # =============================================================================
 # Help
 # =============================================================================
 
 .PHONY: help
 help:
-	@echo "cli-agent-evals Makefile - Backwards compatibility wrapper"
+	@echo "cli-agent-evals Makefile"
 	@echo ""
-	@echo "This Makefile delegates to pnpm scripts defined in package.json"
+	@echo "Targets delegate to pnpm scripts defined in package.json"
 	@echo "Run 'pnpm run' to see all available scripts"
 	@echo ""
 	@echo "Common targets:"
