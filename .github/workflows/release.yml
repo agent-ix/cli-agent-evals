@@ -6,6 +6,8 @@ name: Release
 # Publisher entry on npmjs.com matches.
 
 on:
+  push:
+    tags: ["*.*.*"]
   workflow_dispatch:
 
 permissions:

@@ -51,11 +51,10 @@ console.log("  pnpm run docker:build  Build Docker image");
 console.log(
   "  pnpm run publish:dry-run  Test publish without actually publishing",
 );
-console.log("  pnpm run publish:local Publish to local npm.ix registry");
-console.log("  pnpm run tags          Show dist-tags on npm.ix\n");
+console.log("");
 
 console.log("💡 TIPS");
 console.log('  • Run "pnpm run" to see all available scripts');
-console.log('  • Run "make help" for Makefile targets (backwards compat)');
+console.log('  • Run "make help" for Makefile targets');
 console.log("  • Most scripts accept additional arguments after --");
 console.log("    Example: pnpm test -- --watch\n");
