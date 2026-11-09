@@ -18,8 +18,8 @@ importers:
         specifier: '>=5.1.10'
         version: 5.1.10
       zod:
-        specifier: '>=4.4.3'
-        version: 4.4.3
+        specifier: '>=4.6.7'
+        version: 4.6.7
     devDependencies:
       '@types/node':
         specifier: ^25.9.2
@@ -1630,8 +1630,8 @@ packages:
   yoga-layout@3.2.1:
     resolution: {integrity: sha512-0LPOt3AxKqMdFBZA3HBAt/t/8vIKq7VaQYbuA8WxCgung+p9TVyKRYdpvCb80HcdTN2NkbIKbhNwKUfm3tQywQ==}
 
-  zod@4.4.3:
-    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
 snapshots:
 
@@ -1647,7 +1647,7 @@ snapshots:
       age-encryption: 0.3.0
       react: 19.2.7
       yaml: 2.9.0
-      zod: 4.4.3
+      zod: 4.6.7
     transitivePeerDependencies:
       - '@types/react'
       - react-devtools-core
@@ -3022,4 +3022,4 @@ snapshots:
 
   yoga-layout@3.2.1: {}
 
-  zod@4.4.3: {}
+  zod@4.6.7: {}

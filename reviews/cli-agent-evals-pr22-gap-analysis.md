@@ -41,6 +41,6 @@ exit behaviour.
 
 Round 1, verified against `git diff 3e293ba..6b30682`.
 
-| FND     | Outcome | Reason                                                                                                                                                                                                                                     |
-| ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| FND     | Outcome | Reason                                                                                                                                                                                                                                                                         |
+| ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | FND-001 | fixed   | New `tests/cli.test.ts` imports `main` from `../src/cli.js` (no `dist/` needed), asserts `init` prints the template, and asserts `list --suite <tmp fixture>` lists its scenario; the list test fails if `--suite` is not parsed, since the default config path does not exist |
