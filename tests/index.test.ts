@@ -24,6 +24,7 @@ import {
   selectScenarios,
 } from "../src/index.js";
 import { resolveAgentSentinel } from "../src/runner.js";
+import { trace } from "./trace.js";
 
 function providerFixture(mode: string): string {
   const root = mkdtempSync(join(tmpdir(), "cli-evals-provider-"));
@@ -196,8 +197,8 @@ test("TC-026: completion requires the successful final Bash marker command", () 
   expect(findSentinelInTranscript(transcript)).toBe("failed");
 });
 
-/// Trace: FR-002-AC-10
 test("TC-026: runner ignores host-screen completion while the session is pending", () => {
+  trace("FR-002-AC-10");
   const pendingTranscript = findSentinelInTranscript(
     join(tmpdir(), "missing-pending-session-transcript.jsonl"),
   );
