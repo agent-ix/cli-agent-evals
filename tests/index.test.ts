@@ -193,6 +193,14 @@ test("TC-026: completion requires the successful final Bash marker command", () 
   );
   expect(findSentinelInTranscript(transcript)).toBe("complete");
 
+  // A failure marker earlier in the transcript cannot be overwritten by a later completion.
+  writeTranscript(
+    assistantText("<<<EVAL-FAILED>>>"),
+    bashCall("final", "echo '<<<EVAL-COMPLETE>>>'"),
+    bashResult("final", "<<<EVAL-COMPLETE>>>", false),
+  );
+  expect(findSentinelInTranscript(transcript)).toBe("failed");
+
   writeTranscript(assistantText("<<<EVAL-FAILED>>>"));
   expect(findSentinelInTranscript(transcript)).toBe("failed");
 });

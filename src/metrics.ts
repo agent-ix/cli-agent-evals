@@ -99,7 +99,7 @@ export function findSentinelInTranscript(
         block.is_error !== true &&
         text.includes(SENTINEL_COMPLETE)
       ) {
-        return "complete";
+        return failed ? "failed" : "complete";
       }
     }
   }
