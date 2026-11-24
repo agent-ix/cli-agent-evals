@@ -29,3 +29,11 @@ AC-10 precisely defines a successful prescribed final command whose own result c
 | ID | Severity | Summary | Refs | Escape Cause |
 | --- | --- | --- | --- | --- |
 | FND-001 | medium | FR-002-AC-10 has no test case or TM-001 row; add a focused transcript fixture case and map the criterion in the matrix. | spec/functional/FR-002-live-agent-runner-cli.md:35; spec/tests.md:24-25 | correct-requirement-no-evidence |
+
+## Dispositions
+
+| FND | outcome | reason |
+| --- | --- | --- |
+| FND-001 | fixed | Added TC-026 with five false-positive fixtures and a successful-final-command case, and mapped FR-002-AC-10 to TC-026 in TM-001. The planned status correctly records that implementation has not landed yet. |
+
+`after_excerpt`: `| FR-002 | FR-002-AC-10 | TC-026 | 🚧 Planned until code lands |`
