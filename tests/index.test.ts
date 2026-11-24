@@ -121,9 +121,78 @@ test("findSentinelInTranscript ignores task brief echoes from Read results", () 
           },
         ],
       },
+    })}\n${JSON.stringify({
+      type: "user",
+      message: {
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: "bash-marker",
+            content: "<<<EVAL-COMPLETE>>>",
+          },
+        ],
+      },
     })}\n`,
   );
   expect(findSentinelInTranscript(transcript)).toBe("complete");
+});
+
+test("TC-026: completion requires the successful final Bash marker command", () => {
+  const dir = mkdtempSync(join(tmpdir(), "cli-evals-tc-026-"));
+  const transcript = join(dir, "session.jsonl");
+  const writeTranscript = (...lines: unknown[]) =>
+    writeFileSync(
+      transcript,
+      lines.map((line) => JSON.stringify(line)).join("\n"),
+    );
+  const assistantText = (text: string) => ({
+    type: "assistant",
+    message: { content: [{ type: "text", text }] },
+  });
+  const bashCall = (id: string, command: string) => ({
+    type: "assistant",
+    message: {
+      content: [{ type: "tool_use", id, name: "Bash", input: { command } }],
+    },
+  });
+  const bashResult = (id: string, content: string, is_error = false) => ({
+    type: "user",
+    message: {
+      content: [{ type: "tool_result", tool_use_id: id, content, is_error }],
+    },
+  });
+
+  // This is the false-positive path: task text echoed as assistant prose.
+  writeTranscript(
+    assistantText("The required command is echo '<<<EVAL-COMPLETE>>>'"),
+  );
+  expect(findSentinelInTranscript(transcript)).toBeNull();
+
+  // Marker text in an assistant tool input is not command output.
+  writeTranscript(bashCall("printf", "printf '<<<EVAL-COMPLETE>>>'"));
+  expect(findSentinelInTranscript(transcript)).toBeNull();
+
+  // A marker emitted by an unrelated command cannot complete the run.
+  writeTranscript(
+    bashCall("other", "cat EVAL_TASK.md"),
+    bashResult("other", "<<<EVAL-COMPLETE>>>"),
+  );
+  expect(findSentinelInTranscript(transcript)).toBeNull();
+
+  // The final command must itself succeed and return the completion marker.
+  writeTranscript(
+    bashCall("final", "echo '<<<EVAL-COMPLETE>>>'"),
+    bashResult("final", "<<<EVAL-COMPLETE>>>", true),
+  );
+  expect(findSentinelInTranscript(transcript)).toBeNull();
+  writeTranscript(
+    bashCall("final", "echo '<<<EVAL-COMPLETE>>>'"),
+    bashResult("final", "<<<EVAL-COMPLETE>>>", false),
+  );
+  expect(findSentinelInTranscript(transcript)).toBe("complete");
+
+  writeTranscript(assistantText("<<<EVAL-FAILED>>>"));
+  expect(findSentinelInTranscript(transcript)).toBe("failed");
 });
 
 test("TC-002: parseClaudeMetrics aggregates token and tool usage", () => {

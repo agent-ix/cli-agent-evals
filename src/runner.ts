@@ -217,7 +217,12 @@ async function runAgentScenario<TContext extends EvalContext>(
         exitReason = "exit";
         break;
       }
-      const sentinel = transcriptSentinel ?? findSentinelInText(screen);
+      const screenSentinel = findSentinelInText(screen);
+      // A screen can contain task text or a prior command's output. Only the
+      // transcript can associate completion output with the prescribed Bash
+      // command; retain screen-based failure detection for host visibility.
+      const sentinel =
+        transcriptSentinel ?? (screenSentinel === "failed" ? "failed" : null);
       if (sentinel === "complete") {
         exitReason = "complete";
         break;

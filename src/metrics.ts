@@ -51,7 +51,9 @@ export function findSentinelInTranscript(
 ): "complete" | "failed" | null {
   if (!existsSync(path)) return null;
   const lines = readJsonl(path) as Array<Record<string, unknown>>;
+  const completionCommands = new Set<string>();
   const toolNames = new Map<string, string>();
+  let failed = false;
 
   for (const line of lines) {
     const message = line.message as Record<string, unknown> | undefined;
@@ -60,16 +62,23 @@ export function findSentinelInTranscript(
     if (line.type === "assistant" && Array.isArray(content)) {
       for (const block of content as Array<Record<string, unknown>>) {
         if (block.type === "text" && typeof block.text === "string") {
-          const sentinel = findSentinelInText(block.text);
-          if (sentinel) return sentinel;
+          if (findSentinelInText(block.text) === "failed") failed = true;
         }
         if (block.type !== "tool_use") continue;
         const id = typeof block.id === "string" ? block.id : undefined;
         const name = typeof block.name === "string" ? block.name : "unknown";
         if (id) toolNames.set(id, name);
-        if (name === "Read") continue;
-        const sentinel = findSentinelInText(JSON.stringify(block.input ?? {}));
-        if (sentinel) return sentinel;
+        const input = block.input as Record<string, unknown> | undefined;
+        const command = typeof input?.command === "string" ? input.command : "";
+        if (
+          id &&
+          name === "Bash" &&
+          command.trim() === `echo '${SENTINEL_COMPLETE}'`
+        ) {
+          completionCommands.add(id);
+        }
+        if (findSentinelInText(JSON.stringify(input ?? {})) === "failed")
+          failed = true;
       }
     }
 
@@ -83,12 +92,19 @@ export function findSentinelInTranscript(
         typeof block.content === "string"
           ? block.content
           : JSON.stringify(block.content ?? "");
-      const sentinel = findSentinelInText(text);
-      if (sentinel) return sentinel;
+      if (findSentinelInText(text) === "failed") failed = true;
+      if (
+        toolUseId &&
+        completionCommands.has(toolUseId) &&
+        block.is_error !== true &&
+        text.includes(SENTINEL_COMPLETE)
+      ) {
+        return "complete";
+      }
     }
   }
 
-  return null;
+  return failed ? "failed" : null;
 }
 
 export function parseClaudeMetrics(path: string): ScenarioMetrics {
