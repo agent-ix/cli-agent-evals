@@ -23,6 +23,7 @@ import {
   runSuite,
   selectScenarios,
 } from "../src/index.js";
+import { resolveAgentSentinel } from "../src/runner.js";
 
 function providerFixture(mode: string): string {
   const root = mkdtempSync(join(tmpdir(), "cli-evals-provider-"));
@@ -193,6 +194,18 @@ test("TC-026: completion requires the successful final Bash marker command", () 
 
   writeTranscript(assistantText("<<<EVAL-FAILED>>>"));
   expect(findSentinelInTranscript(transcript)).toBe("failed");
+});
+
+/// Trace: FR-002-AC-10
+test("TC-026: runner ignores host-screen completion while the session is pending", () => {
+  const pendingTranscript = findSentinelInTranscript(
+    join(tmpdir(), "missing-pending-session-transcript.jsonl"),
+  );
+  const hostScreen = findSentinelInText("still running <<<EVAL-COMPLETE>>>");
+  expect(pendingTranscript).toBeNull();
+  expect(hostScreen).toBe("complete");
+  expect(resolveAgentSentinel(pendingTranscript, hostScreen)).toBeNull();
+  expect(resolveAgentSentinel(null, "failed")).toBe("failed");
 });
 
 test("TC-002: parseClaudeMetrics aggregates token and tool usage", () => {

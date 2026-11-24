@@ -119,6 +119,14 @@ function unavailableProviderRun(): AgentRunResult {
   return { ok: false, exitReason: "error", wallMs: 0 };
 }
 
+/** Resolve run completion from correlated session evidence; screen text alone is not completion. */
+export function resolveAgentSentinel(
+  transcriptSentinel: "complete" | "failed" | null,
+  screenSentinel: "complete" | "failed" | null,
+): "complete" | "failed" | null {
+  return transcriptSentinel ?? (screenSentinel === "failed" ? "failed" : null);
+}
+
 function providerError(operation: string, error: unknown): AssertionResult {
   return {
     ok: false,
@@ -221,8 +229,7 @@ async function runAgentScenario<TContext extends EvalContext>(
       // A screen can contain task text or a prior command's output. Only the
       // transcript can associate completion output with the prescribed Bash
       // command; retain screen-based failure detection for host visibility.
-      const sentinel =
-        transcriptSentinel ?? (screenSentinel === "failed" ? "failed" : null);
+      const sentinel = resolveAgentSentinel(transcriptSentinel, screenSentinel);
       if (sentinel === "complete") {
         exitReason = "complete";
         break;
