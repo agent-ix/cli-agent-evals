@@ -22,6 +22,7 @@ type: TestMatrix
 | FR-002         | FR-002-AC-7              | TC-022                 | ✅ Complete                                                           |
 | FR-002         | FR-002-AC-8              | TC-023                 | ✅ Complete                                                           |
 | FR-002         | FR-002-AC-9              | TC-024, TC-025         | ✅ Complete                                                           |
+| FR-002         | FR-002-AC-10             | TC-026                 | 🚧 Planned until code lands                                            |
 | FR-004         | FR-004-AC-1..FR-004-AC-5 | TC-003, TC-009..TC-012 | ✅ Complete                                                           |
 | FR-004         | FR-004-AC-6              | TC-013                 | 🚧 Planned pending public release                                     |
 | FR-005         | FR-005-AC-1              | TC-015                 | ✅ Complete                                                           |
@@ -75,3 +76,4 @@ type: TestMatrix
 | TC-023  | Kickoff submitted outside paste burst         | Unit        | P0       | FR-002-AC-8              | ✅ Complete                                                           |
 | TC-024  | Codex rollout transcript discovery            | Unit        | P0       | FR-002-AC-9              | ✅ Complete                                                           |
 | TC-025  | Codex rollout metric aggregation              | Unit        | P0       | FR-002-AC-9              | ✅ Complete                                                           |
+| TC-026  | Completion marker needs successful final command | Unit        | P0       | FR-002-AC-10             | 🚧 Planned until code lands                                            |
